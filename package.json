@@ -1,0 +1,13 @@
+{
+  "name": "brain-off",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test tests/*.test.ts",
+    "demo": "node src/demo.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": { "typescript": "~5.9.3", "@types/node": "^24.0.0" }
+}
