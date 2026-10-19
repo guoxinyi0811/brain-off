@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import type { InventoryState } from '../domain/model.ts';
 import { fridgeGeometry as geometry, regionOutline } from '../config/fridge-geometry.ts';
 import { expiryLabel, label } from './labels.ts';
+import { quantityLabel } from '../domain/quantity.ts';
 
 interface Props { state: InventoryState; selected: string; today: string; onSelect: (id: string) => void }
 export function Fridge({ state, selected, today, onSelect }: Props) {
@@ -22,7 +23,7 @@ export function Fridge({ state, selected, today, onSelect }: Props) {
         const style: CSSProperties = { left: `${region.x / geometry.width * 100}%`, top: `${region.y / geometry.height * 100}%`, width: `${region.width / geometry.width * 100}%`, height: `${region.height / geometry.height * 100}%` };
         return <button key={node.id} className={`drawing-region ${region.shape} ${selected === node.id ? 'selected' : ''}`} style={style}
           type="button" aria-pressed={selected === node.id} data-location-id={node.id}
-          aria-label={`${label(node.label)}，${items.length} 件食物${due ? `，${due} 件需留意` : ''}`} onClick={() => onSelect(node.id)}>
+          aria-label={`${label(node.label)}，${items.length} 条库存${due ? `，${due} 条需留意` : ''}`} onClick={() => onSelect(node.id)}>
           <svg viewBox={`0 0 ${region.width} ${region.height}`} preserveAspectRatio="none" aria-hidden="true">
             <path d={regionOutline(region)} className="region-surface" />
             {region.shape === 'shelf' ? <path d={`M2 ${region.height - 3}H${region.width - 2}`} className="shelf-edge" />
@@ -30,7 +31,7 @@ export function Fridge({ state, selected, today, onSelect }: Props) {
             {region.shape === 'drawer' && <path d={`M${region.width / 2 - 15} ${region.height - 13}h30`} className="drawer-handle" />}
           </svg>
           <span className="region-mark" aria-hidden="true">{region.mark}</span>
-          <span className="region-content" aria-hidden="true">{items.length > 0 && <span className="region-item-name">{items[0]!.name}</span>}</span>
+          <span className="region-content" aria-hidden="true">{items.length > 0 && <span className="region-item-name">{items[0]!.name}{items[0]!.quantity && ` · ${quantityLabel(items[0]!)}`}</span>}</span>
           <span className="region-count" aria-hidden="true">{items.length > 0 ? items.length : ''}{due > 0 && <b title="需留意">!</b>}</span>
         </button>;
       })}

@@ -4,13 +4,17 @@ import type { InventoryItem, InventoryState, ShelfLife } from '../domain/model.t
 import { resolveExpirationInput } from './expirationInput.ts';
 import type { ExpirationInput } from './expirationInput.ts';
 import { foodTypes, inferFoodType, isRefrigerated, estimateSource } from '../domain/food-estimates.ts';
-import { expiryLabel, locationName, localToday, storageLocations } from './labels.ts';
+import { suggestLocations } from '../domain/placement.ts';
+import { quantityInput } from '../domain/quantity.ts';
+import { expiryLabel, label, locationName, localToday, storageLocations } from './labels.ts';
 import { Modal } from './Modal.tsx';
 
 interface Props { state: InventoryState; locationId: string; item?: InventoryItem; busy: boolean; onClose: () => void; onSave: (item: InventoryItem) => Promise<void> }
 export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Props) {
   const expiry = item?.expiration;
   const [name, setName] = useState(item?.name ?? '');
+  const [quantity, setQuantity] = useState(item?.quantity ? String(item.quantity.value) : '');
+  const [quantityUnit, setQuantityUnit] = useState(item?.quantity?.unit ?? '');
   const [location, setLocation] = useState(item?.locationId ?? locationId);
   const [mode, setMode] = useState<ExpirationInput['mode']>(expiry?.kind === 'automatic' || !expiry ? 'automatic' : expiry.kind);
   const [date, setDate] = useState(expiry?.kind === 'exact' ? expiry.date : expiry?.kind === 'production' ? expiry.producedOn : '');
@@ -21,6 +25,7 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
   const [basisDate, setBasisDate] = useState(expiry?.kind === 'automatic' ? expiry.basisDate : localToday());
   const [expiryChanged, setExpiryChanged] = useState(false);
   const [error, setError] = useState('');
+  const suggestions = suggestLocations(state, name, typeChosen ? foodType : undefined);
   const automatic = mode === 'automatic' || !duration.trim() && (mode === 'estimate' || mode === 'production' && !date);
   function input(changed = expiryChanged): ExpirationInput {
     return { existing: item?.expiration, changed, mode, date, duration, unit, today: localToday(),
@@ -37,7 +42,8 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
     try {
       if (!name.trim()) throw new Error('请填写食物名称。');
       const expiration = resolveExpirationInput(input());
-      await onSave({ id: item?.id ?? crypto.randomUUID(), name: name.trim(), locationId: location, expiration });
+      await onSave({ id: item?.id ?? crypto.randomUUID(), name: name.trim(), locationId: location, expiration,
+        quantity: quantityInput(quantity, quantityUnit) });
       onClose();
     } catch (cause) { setError(cause instanceof Error ? cause.message : '暂时无法保存，请重试。'); }
   }
@@ -46,7 +52,15 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
       <label>食物名称<input autoFocus required maxLength={100} value={name} onChange={e => {
         setName(e.target.value); if (!typeChosen && !item) setFoodType(inferFoodType(e.target.value));
       }} placeholder="名称" /></label>
+      <div className="quantity-fields">
+        <label>数量（可选）<input type="number" min="0" max="1000000000" step="any" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="数量" /></label>
+        <label>单位<input type="text" maxLength={16} value={quantityUnit} onChange={e => setQuantityUnit(e.target.value)} placeholder="盒、瓶、g…" list="quantity-units" /></label>
+        <datalist id="quantity-units">{['个', '盒', '瓶', '袋', '份', 'g', 'kg', 'ml', 'L'].map(value => <option key={value} value={value} />)}</datalist>
+      </div>
       <label>位置<select value={location} onChange={e => setLocation(e.target.value)}>{storageLocations(state).map(node => <option key={node.id} value={node.id}>{locationName(state, node.id)}</option>)}</select></label>
+      {suggestions.length > 0 && <div className="placement-suggestions" aria-label="存放位置建议"><p className="field-hint">按已设置用途推荐</p>{suggestions.map(suggestion => <button type="button" className="placement-choice" key={suggestion.locationId}
+        aria-label={`采用推荐位置：${locationName(state, suggestion.locationId)}`} aria-pressed={location === suggestion.locationId}
+        onClick={() => setLocation(suggestion.locationId)}><span>{locationName(state, suggestion.locationId)}</span><small>{suggestion.categoryIds.map(id => label(state.categories.find(c => c.id === id)!.label)).join(' / ')}{location === suggestion.locationId ? ' · 已选' : ' ↗'}</small></button>)}</div>}
       <fieldset className="expiry-input"><legend>保质期</legend><div className="segmented">
         <label><input type="radio" name="expiry-mode" checked={mode === 'estimate'} onChange={() => changeMode('estimate')} />预估剩余</label>
         <label><input type="radio" name="expiry-mode" checked={mode === 'production'} onChange={() => changeMode('production')} />生产日期＋时长</label>

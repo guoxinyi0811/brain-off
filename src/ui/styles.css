@@ -121,6 +121,14 @@ dialog::backdrop { background: #20272d55; }
 .modal-head h2 { font-size: 20px; font-weight: 550; overflow-wrap: anywhere; }
 .icon-button { background: none; border: 0; padding: 0; width: 25px; height: 28px; line-height: 25px; font-size: 25px; flex-shrink: 0; }
 .form-fields > label { display: block; margin-bottom: 18px; font-size: 12px; }
+.quantity-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.quantity-fields > label { font-size: 12px; min-width: 0; }
+.food-quantity { display: inline-block; margin-left: 10px; font-size: 12px; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; }
+.placement-suggestions { margin: -8px 0 18px; }
+.placement-choice { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; width: 100%; text-align: left; border: 0; border-left: 2px solid #b5c1ca; background: transparent; padding: 8px 10px; margin-top: 7px; font-size: 12px; }
+.placement-choice > span { overflow-wrap: anywhere; }
+.placement-choice small { color: #516471; font-size: 11px; }
+.placement-choice:hover, .placement-choice[aria-pressed=true] { border-left-color: #405e73; background: var(--ice); }
 .form-fields input:not([type=radio]), .form-fields select { width: 100%; padding: 10px; margin-top: 7px; border: 1px solid #a4b2bd; border-radius: 2px; background: #fff; color: var(--ink); min-width: 0; }
 .form-fields input::placeholder { color: #77848e; }
 .expiry-input legend { font-size: 12px; margin-bottom: 12px; }

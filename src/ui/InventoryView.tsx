@@ -2,6 +2,7 @@ import type { InventoryItem, InventoryState } from '../domain/model.ts';
 import { emptyInventoryQuery, queryInventory } from '../domain/inventory-query.ts';
 import type { ExpirationFilter, InventoryQuery, InventorySort } from '../domain/inventory-query.ts';
 import { expiryLabel, locationName, storageLocations } from './labels.ts';
+import { quantityLabel } from '../domain/quantity.ts';
 
 interface Props {
   state: InventoryState;
@@ -36,12 +37,12 @@ export function InventoryView({ state, today, query, busy, onQuery, onLocate, on
         {filtered && <button className="text-button clear-filters" onClick={() => onQuery({ ...emptyInventoryQuery })}>清除筛选</button>}
       </div>
     </div>
-    <p className="inventory-result-count" role="status" aria-live="polite">{results.length} / {state.items.length} 件</p>
+    <p className="inventory-result-count" role="status" aria-live="polite">{results.length} / {state.items.length} 条</p>
     {results.length ? <ul className="inventory-results">{results.map(item => {
       const expiry = expiryLabel(item.expiration, today);
       const path = locationName(state, item.locationId);
       return <li key={item.id} className="inventory-row">
-        <div className="inventory-name"><h2>{item.name}</h2><button className="location-link" aria-label={`在冰箱中定位${item.name}：${path}`} onClick={() => onLocate(item)}>{path}<span aria-hidden="true"> ↗</span></button></div>
+        <div className="inventory-name"><h2>{item.name}{item.quantity && <span className="food-quantity">{quantityLabel(item)}</span>}</h2><button className="location-link" aria-label={`在冰箱中定位${item.name}：${path}`} onClick={() => onLocate(item)}>{path}<span aria-hidden="true"> ↗</span></button></div>
         <div className="inventory-expiration"><p className={`expiry ${expiry.status}`}>{expiry.text}</p><span>{expiry.detail}</span></div>
         <div className="inventory-actions"><button className="text-button" disabled={busy} aria-label={`编辑或移动${item.name}`} onClick={() => onEdit(item)}>编辑</button><button className="text-button" disabled={busy} aria-label={`移除${item.name}`} onClick={() => onRemove(item)}>移除</button></div>
       </li>;

@@ -8,6 +8,7 @@ import { ItemForm } from './ItemForm.tsx';
 import { Modal } from './Modal.tsx';
 import { InventoryView } from './InventoryView.tsx';
 import { emptyInventoryQuery } from '../domain/inventory-query.ts';
+import { quantityLabel } from '../domain/quantity.ts';
 
 export function App() {
   const { state, loading, saving, loadError, load, commit, notice } = useInventory();
@@ -52,7 +53,7 @@ export function App() {
     <header className="topbar"><a className="wordmark" href="#" aria-label="brain off 首页">brain off</a>
       <span className="local-badge"><i aria-hidden="true" />本地保存</span></header>
     <main>
-      <div className="page-heading"><h1>{view === 'fridge' ? '我的冰箱' : '库存'}<span className="heading-period" aria-hidden="true">.</span></h1>{state && <p><strong>{state.items.length.toString().padStart(2, '0')}</strong> 件食物<span aria-hidden="true"> / </span><strong>{due.length.toString().padStart(2, '0')}</strong> 件需留意</p>}</div>
+      <div className="page-heading"><h1>{view === 'fridge' ? '我的冰箱' : '库存'}<span className="heading-period" aria-hidden="true">.</span></h1>{state && <p><strong>{state.items.length.toString().padStart(2, '0')}</strong> 条库存<span aria-hidden="true"> / </span><strong>{due.length.toString().padStart(2, '0')}</strong> 条需留意</p>}</div>
       <nav className="view-switch" aria-label="查看方式"><button aria-pressed={view === 'fridge'} onClick={() => setView('fridge')}>冰箱</button><button aria-pressed={view === 'inventory'} onClick={() => setView('inventory')}>库存</button></nav>
       <div className="status-line" role="status" aria-live="polite">{saving ? '保存中…' : notice}</div>
       {loading ? <div className="loading-state">正在打开冰箱…</div> : loadError || !state ? <section className="load-error" role="alert"><h2>暂时无法读取冰箱</h2><p>浏览器存储不可用或已有数据无法读取。原数据未被覆盖。</p><button className="primary" onClick={() => void load()}>重新读取</button></section> : <>
@@ -60,12 +61,12 @@ export function App() {
           onLocate={locateItem} onEdit={setForm} onRemove={item => { setError(''); setDeleting(item); }} onAdd={() => setForm('new')} /> : <><section className="workspace" id="workspace" aria-label="冰箱和位置详情">
           <div className="spatial-panel"><Fridge state={state} selected={selectedId} today={today} onSelect={selectLocation} /></div>
           <aside className="detail-panel" aria-label="所选位置详情" tabIndex={-1}>
-            {location ? <><div className="location-heading"><div><p className="location-parent">{label(state.locations.find(n => n.id === location.parentId)?.label ?? state.fridge.name)}</p><h2>{label(location.label)}</h2></div><span className="item-count">{items.length} 件</span></div>
+            {location ? <><div className="location-heading"><div><p className="location-parent">{label(state.locations.find(n => n.id === location.parentId)?.label ?? state.fridge.name)}</p><h2>{label(location.label)}</h2></div><span className="item-count">{items.length} 条</span></div>
               <div className="purpose-row"><div className="purpose-tags">{assigned.map(id => <span key={id}>{label(state.categories.find(c => c.id === id)!.label)}</span>)}</div><button className="text-button" onClick={() => { setError(''); setPurposeDraft(assigned); }}>设置用途</button></div>
               <button className="primary add-button" onClick={() => setForm('new')} disabled={saving}><span aria-hidden="true">＋</span> 添加食物</button>
               <div className="item-list">{items.length ? [...items].sort((a, b) => expiryLabel(a.expiration, today).daysRemaining - expiryLabel(b.expiration, today).daysRemaining).map(item => {
                 const expiry = expiryLabel(item.expiration, today);
-                return <article key={item.id} className={`item-card ${locatedId === item.id ? 'located' : ''}`}><div className="item-top"><h3>{item.name}</h3><p className={`expiry ${expiry.status}`}>{expiry.text}</p></div><div className="item-bottom"><span>{expiry.detail}</span><div><button className="text-button" aria-label={`编辑或移动${item.name}`} onClick={() => setForm(item)}>编辑 / 移动</button><button className="text-button remove-button" aria-label={`移除${item.name}`} onClick={() => { setError(''); setDeleting(item); }}>移除</button></div></div></article>;
+                return <article key={item.id} className={`item-card ${locatedId === item.id ? 'located' : ''}`}><div className="item-top"><h3>{item.name}{item.quantity && <span className="food-quantity">{quantityLabel(item)}</span>}</h3><p className={`expiry ${expiry.status}`}>{expiry.text}</p></div><div className="item-bottom"><span>{expiry.detail}</span><div><button className="text-button" aria-label={`编辑或移动${item.name}`} onClick={() => setForm(item)}>编辑 / 移动</button><button className="text-button remove-button" aria-label={`移除${item.name}`} onClick={() => { setError(''); setDeleting(item); }}>移除</button></div></div></article>;
               }) : <p className="empty-state">暂无食物</p>}</div>
             </> : <p>示例配置中没有可放食物的位置。</p>}
           </aside>
@@ -75,7 +76,7 @@ export function App() {
       <footer>仅存于此浏览器 · 日期仅供整理参考</footer>
     </main>
     {form && state && <ItemForm state={state} locationId={view === 'inventory' && query.locationId ? query.locationId : selectedId} item={form === 'new' ? undefined : form} busy={saving} onClose={() => setForm(null)} onSave={async item => {
-      await commit(s => form === 'new' ? addItem(s, item) : updateItem(s, item.id, { name: item.name, locationId: item.locationId, expiration: item.expiration }), '已保存');
+      await commit(s => form === 'new' ? addItem(s, item) : updateItem(s, item.id, { name: item.name, locationId: item.locationId, expiration: item.expiration, quantity: item.quantity }), '已保存');
       setSelected(item.locationId);
     }} />}
     {purposes && state && <Modal title="储存用途" busy={saving} onClose={() => setPurposeDraft(null)}><p className="modal-copy">可多选，不影响已有食物。</p><fieldset className="category-grid" disabled={saving}><legend className="sr-only">储存用途</legend>{state.categories.map(category => <label key={category.id}><input type="checkbox" checked={purposes.includes(category.id)} onChange={e => setPurposeDraft(e.target.checked ? [...purposes, category.id] : purposes.filter(id => id !== category.id))} />{label(category.label)}</label>)}</fieldset>{error && <p className="error" role="alert">{error}</p>}<div className="modal-actions"><button className="secondary" disabled={saving} onClick={() => setPurposeDraft(null)}>取消</button><button className="primary" disabled={saving} onClick={() => void saveAction(s => setPurposes(s, selectedId, purposes), '用途已更新', () => setPurposeDraft(null))}>{saving ? '保存中…' : '保存'}</button></div></Modal>}

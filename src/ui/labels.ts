@@ -1,5 +1,6 @@
-import type { Expiration, InventoryState, StorageNode } from '../domain/model.ts';
+import type { Expiration, InventoryState } from '../domain/model.ts';
 import { expirationStatus } from '../domain/expiration.ts';
+export { orderedStorageLocations as storageLocations } from '../domain/placement.ts';
 
 const labels: Record<string, string> = {
   'Freezer': '冷冻室', 'Freezer shelf': '冷冻层', 'Refrigerator': '冷藏室',
@@ -8,18 +9,6 @@ const labels: Record<string, string> = {
   'Beverages': '饮料', 'Wine': '酒类', 'Condiments': '酱料', 'Other': '其他',
 };
 export const label = (text: string) => labels[text] ?? text;
-export function storageLocations(state: InventoryState): StorageNode[] {
-  const result: StorageNode[] = [];
-  function visit(parentId: string | null) {
-    const children = state.locations.filter(node => node.parentId === parentId).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
-    for (const node of children) {
-      if (node.canHoldItems) result.push(node);
-      visit(node.id);
-    }
-  }
-  visit(null);
-  return result;
-}
 export function locationName(state: InventoryState, id: string): string {
   const names: string[] = [];
   const seen = new Set<string>();
