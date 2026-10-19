@@ -6,6 +6,10 @@ A refrigerator inventory project centered on physical storage locations.
 
 The React + Vite application now includes a functional front-view refrigerator, location details, food entry with exact or estimated expiration, edit/move/remove flows, multi-category storage purpose editing, and browser-local persistence. The UI is in Chinese and uses a responsive single-column layout on narrow screens. No external image or font service is required.
 
+The approved visual direction is minimal and monochrome: a flat refrigerator drawn with black outlines on white, with matching controls, dialogs and inventory lists. Decorative slogans, gradients, shadows and redundant empty-state copy have been removed.
+
+The monochrome revision passed the same 13 tests and production build. Desktop browser inspection covered the refrigerator and modal styling plus add, move and remove flows. The latest narrow-screen styling still needs a separate browser check.
+
 Food entry starts from the selected location; the form also allows choosing any available location. Estimated dates remain explicitly labeled. Editing only the food name or location preserves the original expiration record. Removal requires confirmation. A failed save keeps the form open, and a failed load leaves existing storage untouched.
 
 ## Milestone 1 foundation
