@@ -8,7 +8,11 @@ export function Modal({ title, onClose, children, busy = false }: { title: strin
     const dialog = ref.current!;
     dialog.showModal();
     dialog.querySelector<HTMLInputElement>('input:not([type="radio"]):not([type="checkbox"])')?.focus();
-    return () => { dialog.close(); trigger.current?.focus(); };
+    return () => {
+      dialog.close();
+      if (trigger.current?.isConnected) trigger.current.focus();
+      else document.querySelector<HTMLElement>('.view-switch button[aria-pressed="true"]')?.focus();
+    };
   }, []);
   return <dialog ref={ref} aria-labelledby="dialog-title" onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
     <div className="modal-head"><h2 id="dialog-title">{title}</h2>
