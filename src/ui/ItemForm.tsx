@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { InventoryItem, InventoryState } from '../domain/model.ts';
 import { resolveExpirationInput } from './expirationInput.ts';
-import { label, localToday } from './labels.ts';
+import { locationName, localToday, storageLocations } from './labels.ts';
 import { Modal } from './Modal.tsx';
 
 interface Props { state: InventoryState; locationId: string; item?: InventoryItem; busy: boolean; onClose: () => void; onSave: (item: InventoryItem) => Promise<void> }
@@ -29,7 +29,7 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
   return <Modal title={item ? '编辑食物' : '添加食物'} onClose={onClose} busy={busy}><form onSubmit={submit}>
     <fieldset disabled={busy} className="form-fields">
       <label>食物名称<input autoFocus required maxLength={100} value={name} onChange={e => setName(e.target.value)} placeholder="名称" /></label>
-      <label>位置<select value={location} onChange={e => setLocation(e.target.value)}>{state.locations.filter(node => node.canHoldItems).map(node => <option key={node.id} value={node.id}>{label(node.label)}</option>)}</select></label>
+      <label>位置<select value={location} onChange={e => setLocation(e.target.value)}>{storageLocations(state).map(node => <option key={node.id} value={node.id}>{locationName(state, node.id)}</option>)}</select></label>
       <fieldset className="expiry-input"><legend>保质期</legend><div className="segmented">
         <label><input type="radio" name="expiry-mode" checked={mode === 'estimate'} onChange={() => { setMode('estimate'); setExpiryChanged(true); }} />预计时长</label>
         <label><input type="radio" name="expiry-mode" checked={mode === 'exact'} onChange={() => { setMode('exact'); setExpiryChanged(true); }} />准确日期</label>
