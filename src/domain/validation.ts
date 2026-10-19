@@ -1,5 +1,5 @@
 import type { InventoryState } from './model.ts';
-import { calendarDay, estimatedExpiration } from './expiration.ts';
+import { addDays, calendarDay, estimatedExpiration, productionExpiration } from './expiration.ts';
 
 function ensure(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -48,10 +48,19 @@ export function validateState(value: unknown): asserts value is InventoryState {
   for (const item of state.items) {
     ensure(text(item.name) && nodes.get(item.locationId)?.canHoldItems, 'Invalid item or storage location');
     const expiry = item.expiration;
+    if (expiry === null) continue;
     ensure(record(expiry) && text(expiry.originalInput) && text(expiry.recordedOn), 'Invalid expiration');
     calendarDay(expiry.recordedOn);
     if (expiry.kind === 'exact') { ensure(text(expiry.date), 'Missing date'); calendarDay(expiry.date); }
-    else {
+    else if (expiry.kind === 'production') {
+      ensure(record(expiry.duration), 'Invalid shelf life');
+      const expected = productionExpiration(expiry.producedOn, expiry.duration, expiry.recordedOn);
+      ensure(expected.kind === 'production' && expected.date === expiry.date, 'Inconsistent production date');
+    } else if (expiry.kind === 'automatic') {
+      ensure(text(expiry.foodType) && text(expiry.ruleId) && text(expiry.source), 'Invalid automatic provenance');
+      calendarDay(expiry.basisDate);
+      ensure(expiry.basisDate <= expiry.recordedOn && addDays(expiry.basisDate, expiry.days) === expiry.estimatedDate, 'Inconsistent automatic date');
+    } else {
       ensure(expiry.kind === 'estimate' && record(expiry.duration), 'Invalid estimate');
       const expected = estimatedExpiration(expiry.duration.value, expiry.duration.unit, expiry.recordedOn, expiry.originalInput);
       ensure(expected.kind === 'estimate' && expected.estimatedDate === expiry.estimatedDate, 'Inconsistent estimated date');

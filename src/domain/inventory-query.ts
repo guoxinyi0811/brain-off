@@ -1,7 +1,7 @@
 import type { InventoryItem } from './model.ts';
 import { expirationStatus } from './expiration.ts';
 
-export type ExpirationFilter = 'all' | 'due-soon' | 'past-date' | 'later';
+export type ExpirationFilter = 'all' | 'due-soon' | 'past-date' | 'later' | 'unknown';
 export type InventorySort = 'expiration' | 'name';
 export interface InventoryQuery {
   search: string;

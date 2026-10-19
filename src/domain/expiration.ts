@@ -1,4 +1,4 @@
-import type { DateOnly, Expiration } from './model.ts';
+import type { DateOnly, Expiration, ShelfLife } from './model.ts';
 
 const DAY = 86_400_000;
 export function calendarDay(date: DateOnly): number {
@@ -28,12 +28,31 @@ export function estimatedExpiration(
   return { kind: 'estimate', originalInput, recordedOn, duration: { value, unit },
     estimatedDate: addDays(recordedOn, value * (unit === 'weeks' ? 7 : 1)) };
 }
-export function expirationStatus(expiration: Expiration, today: DateOnly, warningDays = 3) {
+export function productionExpiration(producedOn: DateOnly, duration: ShelfLife, recordedOn: DateOnly): Expiration {
+  calendarDay(producedOn); calendarDay(recordedOn);
+  if (producedOn > recordedOn) throw new Error('生产日期不能晚于今天。');
+  if (!Number.isSafeInteger(duration.value) || duration.value < 0 || !['days', 'weeks', 'months'].includes(duration.unit))
+    throw new Error('请填写非负整数保质期。');
+  let date: string;
+  if (duration.unit === 'months') {
+    const original = new Date(`${producedOn}T00:00:00Z`);
+    const target = new Date(original); target.setUTCDate(1); target.setUTCMonth(target.getUTCMonth() + duration.value);
+    const end = new Date(target); end.setUTCMonth(end.getUTCMonth() + 1); end.setUTCDate(0);
+    target.setUTCDate(Math.min(original.getUTCDate(), end.getUTCDate()));
+    date = target.toISOString().slice(0, 10); calendarDay(date);
+  } else date = addDays(producedOn, duration.value * (duration.unit === 'weeks' ? 7 : 1));
+  const unit = { days: '天', weeks: '周', months: '个月' }[duration.unit];
+  return { kind: 'production', originalInput: `${producedOn} 生产 · 保质期 ${duration.value} ${unit}`,
+    recordedOn, producedOn, duration: { ...duration }, date };
+}
+export function expirationStatus(expiration: Expiration | null, today: DateOnly, warningDays = 3) {
   if (!Number.isSafeInteger(warningDays) || warningDays < 0) throw new Error('Invalid warning threshold');
-  const date = expiration.kind === 'exact' ? expiration.date : expiration.estimatedDate;
+  calendarDay(today);
+  if (expiration === null) return { date: null, daysRemaining: Infinity, isEstimated: false, status: 'unknown' } as const;
+  const date = expiration.kind === 'exact' || expiration.kind === 'production' ? expiration.date : expiration.estimatedDate;
   const daysRemaining = calendarDay(date) - calendarDay(today);
   return {
-    date, daysRemaining, isEstimated: expiration.kind === 'estimate',
+    date, daysRemaining, isEstimated: expiration.kind === 'estimate' || expiration.kind === 'automatic',
     status: daysRemaining < 0 ? 'past-date' : daysRemaining <= warningDays ? 'due-soon' : 'later',
   } as const;
 }

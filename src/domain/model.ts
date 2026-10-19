@@ -12,19 +12,25 @@ export interface StorageNode {
 }
 export interface Category { id: string; label: string }
 export interface LocationPurpose { locationId: string; categoryId: string }
+export interface ShelfLife { value: number; unit: 'days' | 'weeks' | 'months' }
 
 // Keep input provenance separate from derived dates. A future range variant
 // can add minDays/maxDays without changing exact-date or duration records.
 export type Expiration =
   | { kind: 'exact'; originalInput: string; recordedOn: DateOnly; date: DateOnly }
   | { kind: 'estimate'; originalInput: string; recordedOn: DateOnly;
-      duration: { value: number; unit: 'days' | 'weeks' }; estimatedDate: DateOnly };
+      duration: { value: number; unit: 'days' | 'weeks' }; estimatedDate: DateOnly }
+  | { kind: 'production'; originalInput: string; recordedOn: DateOnly;
+      producedOn: DateOnly; duration: ShelfLife; date: DateOnly }
+  | { kind: 'automatic'; originalInput: string; recordedOn: DateOnly;
+      basisDate: DateOnly; foodType: string; ruleId: string; source: string;
+      days: number; estimatedDate: DateOnly };
 
 export interface InventoryItem {
   id: string;
   name: string;
   locationId: string;
-  expiration: Expiration;
+  expiration: Expiration | null;
 }
 export interface InventoryState {
   schemaVersion: 1;
