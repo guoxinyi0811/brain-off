@@ -11,7 +11,7 @@ export function Modal({ title, onClose, children, busy = false }: { title: strin
     return () => { dialog.close(); trigger.current?.focus(); };
   }, []);
   return <dialog ref={ref} aria-labelledby="dialog-title" onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
-    <div className="modal-head"><div><p className="eyebrow">A LITTLE LESS TO REMEMBER</p><h2 id="dialog-title">{title}</h2></div>
+    <div className="modal-head"><h2 id="dialog-title">{title}</h2>
       <button type="button" className="icon-button" aria-label="关闭窗口" onClick={onClose} disabled={busy}>×</button></div>
     {children}
   </dialog>;
