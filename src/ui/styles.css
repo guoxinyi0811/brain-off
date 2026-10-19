@@ -30,6 +30,15 @@ main, .topbar { width: min(1180px, 100%); margin: auto; padding-inline: 52px; }
 .wordmark { font-size: 25px; font-weight: 750; letter-spacing: -1.5px; text-decoration: none; }
 .local-badge { color: var(--muted); font-size: 11px; display: flex; align-items: center; gap: 7px; }
 .local-badge i { width: 5px; height: 5px; border: 1px solid var(--steel); border-radius: 50%; }
+.topbar-actions { display: flex; align-items: center; gap: 18px; }
+.backup-tools > button { width: 100%; }
+.backup-file { display: block; margin-top: 20px; font-size: 12px; }
+.backup-file input { display: block; width: 100%; margin-top: 9px; font-size: 11px; }
+.recovery-section, .backup-preview { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 17px; }
+.recovery-section h3, .backup-preview h3 { font-size: 13px; font-weight: 550; margin-bottom: 8px; overflow-wrap: anywhere; }
+.recovery-section p, .backup-preview p { font-size: 12px; color: var(--muted); margin-top: 5px; overflow-wrap: anywhere; }
+.recovery-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 6px; }
+.backup-preview .backup-replace-copy { color: var(--ink); margin-top: 15px; }
 .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-top: 33px; }
 h1 { font-size: 35px; font-weight: 600; letter-spacing: -1.8px; line-height: 1.2; }
 .heading-period { color: #7895a8; margin-left: 3px; }

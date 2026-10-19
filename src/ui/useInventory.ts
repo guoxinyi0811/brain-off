@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { InventoryState } from '../domain/model.ts';
-import type { InventoryRepository } from '../persistence/repository.ts';
+import type { BackupRepository } from '../persistence/repository.ts';
 import { LocalStorageRepository } from '../persistence/repository.ts';
 import { createSampleFridge, upgradeFridgeConfiguration } from '../config/sample-fridge.ts';
 
 export function useInventory() {
-  const repository = useRef<InventoryRepository | null>(null);
+  const repository = useRef<BackupRepository | null>(null);
   const current = useRef<InventoryState | null>(null);
   const busy = useRef(false);
   const [state, setState] = useState<InventoryState | null>(null);
@@ -48,5 +48,17 @@ export function useInventory() {
       throw new Error('保存失败，修改尚未生效。请检查浏览器存储权限或可用空间后重试。');
     } finally { busy.current = false; setSaving(false); }
   }, []);
-  return { state, loading, saving, loadError, load, commit, notice };
+  const readRecovery = useCallback(async () => {
+    if (!repository.current) throw new Error('浏览器存储暂时不可用。');
+    return repository.current.loadRecovery();
+  }, []);
+  const replace = useCallback(async (next: InventoryState) => {
+    if (busy.current || !repository.current) throw new Error('暂时无法恢复，请稍后重试。');
+    busy.current = true; setSaving(true); setNotice('');
+    try {
+      await repository.current.replaceWithRecovery(next, current.current);
+      current.current = next; setState(next); setLoadError(false); setNotice('已恢复备份');
+    } finally { busy.current = false; setSaving(false); }
+  }, []);
+  return { state, loading, saving, loadError, load, commit, notice, readRecovery, replace };
 }

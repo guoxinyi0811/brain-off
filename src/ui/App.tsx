@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import type { InventoryItem, InventoryState } from '../domain/model.ts';
 import { addItem, updateItem, removeItem, setPurposes } from '../domain/inventory.ts';
 import { useInventory } from './useInventory.ts';
-import { expiryLabel, label, localToday } from './labels.ts';
+import { expiryLabel, label, localToday, storageLocations } from './labels.ts';
 import { Fridge } from './Fridge.tsx';
 import { ItemForm } from './ItemForm.tsx';
 import { Modal } from './Modal.tsx';
 import { InventoryView } from './InventoryView.tsx';
 import { emptyInventoryQuery } from '../domain/inventory-query.ts';
 import { quantityLabel } from '../domain/quantity.ts';
+import { BackupDialog } from './BackupDialog.tsx';
 
 export function App() {
-  const { state, loading, saving, loadError, load, commit, notice } = useInventory();
+  const { state, loading, saving, loadError, load, commit, notice, readRecovery, replace } = useInventory();
+  const [backupOpen, setBackupOpen] = useState(false);
   const [selected, setSelected] = useState('upper-shelf');
   const [today, setToday] = useState(localToday);
   const [form, setForm] = useState<InventoryItem | 'new' | null>(null);
@@ -51,7 +53,7 @@ export function App() {
   return <div className="app">
     <a className="skip-link" href={view === 'fridge' ? '#workspace' : '#inventory'}>跳到内容</a>
     <header className="topbar"><a className="wordmark" href="#" aria-label="brain off 首页">brain off</a>
-      <span className="local-badge"><i aria-hidden="true" />本地保存</span></header>
+      <div className="topbar-actions"><button className="text-button" disabled={loading || saving} onClick={() => setBackupOpen(true)}>备份</button><span className="local-badge"><i aria-hidden="true" />本地保存</span></div></header>
     <main>
       <div className="page-heading"><h1>{view === 'fridge' ? '我的冰箱' : '库存'}<span className="heading-period" aria-hidden="true">.</span></h1>{state && <p><strong>{state.items.length.toString().padStart(2, '0')}</strong> 条库存<span aria-hidden="true"> / </span><strong>{due.length.toString().padStart(2, '0')}</strong> 条需留意</p>}</div>
       <nav className="view-switch" aria-label="查看方式"><button aria-pressed={view === 'fridge'} onClick={() => setView('fridge')}>冰箱</button><button aria-pressed={view === 'inventory'} onClick={() => setView('inventory')}>库存</button></nav>
@@ -75,6 +77,12 @@ export function App() {
       </>}
       <footer>仅存于此浏览器 · 日期仅供整理参考</footer>
     </main>
+    {backupOpen && <BackupDialog state={state} busy={saving} readRecovery={readRecovery} onClose={() => setBackupOpen(false)} onRestore={async next => {
+      await replace(next);
+      setSelected(previous => next.locations.some(node => node.id === previous && node.canHoldItems)
+        ? previous : storageLocations(next)[0]?.id ?? '');
+      setLocatedId(null); setQuery({ ...emptyInventoryQuery }); setError('');
+    }} />}
     {form && state && <ItemForm state={state} locationId={view === 'inventory' && query.locationId ? query.locationId : selectedId} item={form === 'new' ? undefined : form} busy={saving} onClose={() => setForm(null)} onSave={async item => {
       await commit(s => form === 'new' ? addItem(s, item) : updateItem(s, item.id, { name: item.name, locationId: item.locationId, expiration: item.expiration, quantity: item.quantity }), '已保存');
       setSelected(item.locationId);
