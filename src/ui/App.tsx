@@ -65,12 +65,12 @@ export function App() {
               <button className="primary add-button" onClick={() => setForm('new')} disabled={saving}><span aria-hidden="true">＋</span> 添加食物</button>
               <div className="item-list">{items.length ? [...items].sort((a, b) => expiryLabel(a.expiration, today).daysRemaining - expiryLabel(b.expiration, today).daysRemaining).map(item => {
                 const expiry = expiryLabel(item.expiration, today);
-                return <article key={item.id} className={`item-card ${locatedId === item.id ? 'located' : ''}`}><div className="item-top"><h3>{item.name}</h3><p className={`expiry ${expiry.status}`}>{expiry.text}</p></div><div className="item-bottom"><span>{expiry.isEstimated ? '预估' : '到期'} · {expiry.date}</span><div><button className="text-button" aria-label={`编辑或移动${item.name}`} onClick={() => setForm(item)}>编辑 / 移动</button><button className="text-button remove-button" aria-label={`移除${item.name}`} onClick={() => { setError(''); setDeleting(item); }}>移除</button></div></div></article>;
+                return <article key={item.id} className={`item-card ${locatedId === item.id ? 'located' : ''}`}><div className="item-top"><h3>{item.name}</h3><p className={`expiry ${expiry.status}`}>{expiry.text}</p></div><div className="item-bottom"><span>{expiry.detail}</span><div><button className="text-button" aria-label={`编辑或移动${item.name}`} onClick={() => setForm(item)}>编辑 / 移动</button><button className="text-button remove-button" aria-label={`移除${item.name}`} onClick={() => { setError(''); setDeleting(item); }}>移除</button></div></div></article>;
               }) : <p className="empty-state">暂无食物</p>}</div>
             </> : <p>示例配置中没有可放食物的位置。</p>}
           </aside>
         </section>
-        {due.length > 0 && <section className="reminder" aria-label="到期提醒"><h2>需留意 <small>已过期或 3 天内到期</small></h2><div className="due-items">{due.map(item => <button key={item.id} onClick={() => locateItem(item)}>{item.name}<span>{expiryLabel(item.expiration, today).text} ↗</span></button>)}</div></section>}</>}
+        {due.length > 0 && <section className="reminder" aria-label="到期提醒"><h2>需留意 <small>到期或保质期待确认</small></h2><div className="due-items">{due.map(item => <button key={item.id} onClick={() => locateItem(item)}>{item.name}<span>{expiryLabel(item.expiration, today).text} ↗</span></button>)}</div></section>}</>}
       </>}
       <footer>仅存于此浏览器 · 日期仅供整理参考</footer>
     </main>

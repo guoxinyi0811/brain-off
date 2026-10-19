@@ -124,13 +124,14 @@ dialog::backdrop { background: #20272d55; }
 .form-fields input:not([type=radio]), .form-fields select { width: 100%; padding: 10px; margin-top: 7px; border: 1px solid #a4b2bd; border-radius: 2px; background: #fff; color: var(--ink); min-width: 0; }
 .form-fields input::placeholder { color: #77848e; }
 .expiry-input legend { font-size: 12px; margin-bottom: 12px; }
-.segmented { display: flex; gap: 22px; margin-bottom: 12px; }
+.segmented { display: flex; gap: 10px 18px; flex-wrap: wrap; margin-bottom: 12px; }
 .segmented label { display: flex; gap: 5px; align-items: center; font-size: 12px; cursor: pointer; }
 input[type=radio], input[type=checkbox] { accent-color: #405e73; }
 .duration-row { display: flex; gap: 10px; }
 .duration-row > input { flex: 2; }
 .duration-row > select { flex: 1; }
 .expiry-input > label { font-size: 12px; }
+.automatic-fields > label { display: block; font-size: 12px; margin-top: 12px; }
 .field-hint { font-size: 11px; color: var(--muted); margin-top: 10px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
 .modal-copy { color: var(--muted); font-size: 12px; margin-bottom: 18px; }

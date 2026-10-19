@@ -37,9 +37,11 @@ export function localToday() {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
-export function expiryLabel(expiration: Expiration, today: string) {
+export function expiryLabel(expiration: Expiration | null, today: string) {
   const value = expirationStatus(expiration, today);
+  const detail = value.date ? `${expiration?.kind === 'automatic' ? 'App 预估' : value.isEstimated ? '预估' : '到期'} · ${value.date}` : '暂无可靠估算';
+  if (value.status === 'unknown') return { ...value, text: '保质期待确认', detail };
   const prefix = value.isEstimated ? '预计' : '';
-  return { ...value, text: value.daysRemaining < 0 ? `${prefix}已过期 ${Math.abs(value.daysRemaining)} 天`
+  return { ...value, detail, text: value.daysRemaining < 0 ? `${prefix}已过期 ${Math.abs(value.daysRemaining)} 天`
     : value.daysRemaining === 0 ? `${prefix}今天到期` : `${prefix}还有 ${value.daysRemaining} 天` };
 }

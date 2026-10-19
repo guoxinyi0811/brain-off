@@ -28,7 +28,7 @@ export function InventoryView({ state, today, query, busy, onQuery, onLocate, on
           <option value="">全部位置</option>{storageLocations(state).map(node => <option key={node.id} value={node.id}>{locationName(state, node.id)}</option>)}
         </select></label>
         <label><span className="sr-only">到期状态</span><select value={query.expiration} onChange={event => onQuery({ ...query, expiration: event.target.value as ExpirationFilter })}>
-          <option value="all">全部状态</option><option value="due-soon">3 天内到期</option><option value="past-date">已过期</option><option value="later">超过 3 天到期</option>
+          <option value="all">全部状态</option><option value="due-soon">3 天内到期</option><option value="past-date">已过期</option><option value="later">超过 3 天到期</option><option value="unknown">保质期待确认</option>
         </select></label>
         <label><span className="sr-only">库存排序</span><select value={query.sort} onChange={event => onQuery({ ...query, sort: event.target.value as InventorySort })}>
           <option value="expiration">到期日优先</option><option value="name">按名称排序</option>
@@ -42,7 +42,7 @@ export function InventoryView({ state, today, query, busy, onQuery, onLocate, on
       const path = locationName(state, item.locationId);
       return <li key={item.id} className="inventory-row">
         <div className="inventory-name"><h2>{item.name}</h2><button className="location-link" aria-label={`在冰箱中定位${item.name}：${path}`} onClick={() => onLocate(item)}>{path}<span aria-hidden="true"> ↗</span></button></div>
-        <div className="inventory-expiration"><p className={`expiry ${expiry.status}`}>{expiry.text}</p><span>{expiry.isEstimated ? '预估' : '到期'} · {expiry.date}</span></div>
+        <div className="inventory-expiration"><p className={`expiry ${expiry.status}`}>{expiry.text}</p><span>{expiry.detail}</span></div>
         <div className="inventory-actions"><button className="text-button" disabled={busy} aria-label={`编辑或移动${item.name}`} onClick={() => onEdit(item)}>编辑</button><button className="text-button" disabled={busy} aria-label={`移除${item.name}`} onClick={() => onRemove(item)}>移除</button></div>
       </li>;
     })}</ul> : <p className="inventory-empty">{state.items.length ? '没有匹配的食物' : '暂无食物'}</p>}
