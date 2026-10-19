@@ -8,4 +8,5 @@
 - Run `npm test` and `npm run typecheck` for domain/code updates before syncing. Inspect changes and exclude node_modules, secrets, personal files and scratch artifacts.
 - Keep user requirements, approved decisions, assistant proposals and unresolved questions distinct. Do not expand milestone scope implicitly.
 - Cloud synchronization is required eventually, but is deferred beyond milestone 1.
+- Inventory stage includes name search, location/expiration filters, sorting and result-to-fridge positioning. Preserve expiration provenance when editing from filtered results. Cross-device synchronization remains unimplemented; docs/cloud-sync-plan.md is a proposal, not an approved provider or deployment decision.
 - Website deployment, GitHub Releases and public visibility changes require separate authorization.
