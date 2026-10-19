@@ -85,7 +85,7 @@ Dates are organizational reminders, not food-safety assessments. No automated pl
 
 ## Verification
 
-23 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
+32 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
@@ -98,3 +98,20 @@ Data stays in the same browser and origin. Cross-device sync is accepted future 
 No setup editor, quantity/batch merging, automatic photo recognition or notifications have been added. The application is not deployed.
 
 The owner has authorized syncing completed, verified project updates to GitHub. Deployment and GitHub Releases remain separate decisions. No open-source license or unsupported authorship claims have been added.
+
+## Expiration input update
+
+Confirmed owner requirements:
+- Two manual inputs: estimated remaining days/weeks, or production date plus shelf life (days/weeks/calendar months). Production date is explicitly the manufacturing date, not the purchase or opening date. For example, October 19 + 7 days yields October 26. Month addition clamps to the destination month's last day.
+- If neither is supplied, estimate from a food type where a reviewed rule exists. The form defaults to automatic mode, suggests a type only for unambiguous names and allows changing it. Food type is independent of the storage area's purposes.
+- All dates remain editable. Existing exact-date records remain readable/editable; an untouched record keeps its original date and provenance, including when its name/location changes. A new explicit expiration input replaces the previous one.
+
+Automatic estimates currently support eight specific refrigerated types in `src/domain/food-estimates.ts`. The source is the [FoodSafety.gov Cold Food Storage Chart](https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts); the app rules were checked against it on October 19, 2026. Rules use the lower end of each published range. They assume continuous refrigeration at or below 4°C and use an editable purchase/preparation date, initially today. They do not know the food's prior handling; packaging instructions and actual conditions take precedence. Automatic estimates retain food type, start date, recording date, rule version, source and computed date. Reopening the app never recomputes them from today.
+
+There is no universal rule for broad groceries, milk, produce or condiments in this first rule set. Ambiguous names require selecting a supported type or entering a manual duration. Unknown types and freezer locations produce `expiration: null`, visibly labeled "保质期待确认", included in attention counts and available as a separate inventory filter. They sort after dated food and never appear in known-date filters. Missing dates are not evidence that food is safe. Moving an existing dated record preserves its provenance; it does not establish a new cold-storage estimate.
+
+Validation accepts the extended expiration variants and legacy schema-version-1 snapshots. It rejects partial production inputs, invalid/future start dates, negative/fractional durations and inconsistent derived dates. Both empty manual fields fall back to automatic estimation; one populated production field requires the other.
+
+Confirmed future requirement: voice input should produce an editable structured draft (food name, location, expiration input and its origin), then allow the user to check/correct it before saving into the fridge. Speech recognition, microphone access and automatic placement are not implemented in this update. Recognition must not silently invent a production date or overwrite existing stock. Whether saving needs explicit confirmation versus an editable undo flow remains a future UX decision.
+
+Validation for this update: 32 automated tests, TypeScript and the production build passed. Browser checks covered production-date-plus-duration preview, an automatic estimate using a past purchase date, persistence after reload, unchanged expiration after renaming/moving, unknown-date filtering and manual override to remaining weeks. Test-only browser records were removed afterward.

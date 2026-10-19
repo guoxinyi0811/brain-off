@@ -10,3 +10,4 @@
 - Cloud synchronization is required eventually, but is deferred beyond milestone 1.
 - Inventory stage includes name search, location/expiration filters, sorting and result-to-fridge positioning. Preserve expiration provenance when editing from filtered results. Cross-device synchronization remains unimplemented; docs/cloud-sync-plan.md is a proposal, not an approved provider or deployment decision.
 - Website deployment, GitHub Releases and public visibility changes require separate authorization.
+- Confirmed expiration input: manual remaining days/weeks, or manufacturing date plus shelf life; missing inputs trigger type-based estimation only where a reviewed rule exists. Preserve original dates/provenance, support legacy exact dates, and never renew an untouched record during edits. Unknown estimates are null and visibly pending, never implicitly safe. Voice recognition into editable inventory drafts is future scope, not implemented.
