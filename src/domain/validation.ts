@@ -12,6 +12,7 @@ export function validateState(value: unknown): asserts value is InventoryState {
   ensure(record(value), 'Invalid state');
   ensure(value.schemaVersion === 1, 'Unsupported schema version');
   ensure(record(value.fridge) && text(value.fridge.id) && text(value.fridge.name), 'Invalid fridge');
+  ensure(value.fridge.configurationVersion === undefined || (Number.isSafeInteger(value.fridge.configurationVersion) && Number(value.fridge.configurationVersion) >= 1), 'Invalid configuration version');
   for (const key of ['locations', 'categories', 'purposes', 'items']) ensure(Array.isArray(value[key]), `Invalid ${key}`);
   const state = value as unknown as InventoryState;
   for (const collection of [state.locations, state.categories, state.items]) {
