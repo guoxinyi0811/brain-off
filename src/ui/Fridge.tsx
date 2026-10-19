@@ -21,7 +21,7 @@ export function Fridge({ state, selected, today, onSelect }: Props) {
         const due = items.filter(item => expiryLabel(item.expiration, today).status !== 'later').length;
         const style: CSSProperties = { left: `${region.x / geometry.width * 100}%`, top: `${region.y / geometry.height * 100}%`, width: `${region.width / geometry.width * 100}%`, height: `${region.height / geometry.height * 100}%` };
         return <button key={node.id} className={`drawing-region ${region.shape} ${selected === node.id ? 'selected' : ''}`} style={style}
-          type="button" aria-pressed={selected === node.id}
+          type="button" aria-pressed={selected === node.id} data-location-id={node.id}
           aria-label={`${label(node.label)}，${items.length} 件食物${due ? `，${due} 件需留意` : ''}`} onClick={() => onSelect(node.id)}>
           <svg viewBox={`0 0 ${region.width} ${region.height}`} preserveAspectRatio="none" aria-hidden="true">
             <path d={regionOutline(region)} className="region-surface" />
@@ -35,6 +35,6 @@ export function Fridge({ state, selected, today, onSelect }: Props) {
         </button>;
       })}
     </div>
-    {unmapped.length > 0 && <div className="other-locations">{unmapped.map(node => <button key={node.id} aria-pressed={selected === node.id} onClick={() => onSelect(node.id)}>{label(node.label)}</button>)}</div>}
+    {unmapped.length > 0 && <div className="other-locations">{unmapped.map(node => <button key={node.id} data-location-id={node.id} aria-pressed={selected === node.id} onClick={() => onSelect(node.id)}>{label(node.label)}</button>)}</div>}
   </div>;
 }
