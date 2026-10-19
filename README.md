@@ -1,33 +1,19 @@
 # brain off
 
-A refrigerator inventory project centered on physical storage locations.
+A spatial refrigerator inventory app. Select a real storage location, inspect its food, and add, edit, move or remove items with exact or estimated expiration dates.
 
-## Current version — milestone 2
-
-The React + Vite application now includes a functional front-view refrigerator, location details, food entry with exact or estimated expiration, edit/move/remove flows, multi-category storage purpose editing, and browser-local persistence. The UI is in Chinese and uses a responsive single-column layout on narrow screens. No external image or font service is required.
-
-The approved visual direction is minimal and monochrome: a flat refrigerator drawn with black outlines on white, with matching controls, dialogs and inventory lists. Decorative slogans, gradients, shadows and redundant empty-state copy have been removed.
-
-The monochrome revision passed the same 13 tests and production build. Desktop browser inspection covered the refrigerator and modal styling plus add, move and remove flows. The latest narrow-screen styling still needs a separate browser check.
-
-Food entry starts from the selected location; the form also allows choosing any available location. Estimated dates remain explicitly labeled. Editing only the food name or location preserves the original expiration record. Removal requires confirmation. A failed save keeps the form open, and a failed load leaves existing storage untouched.
-
-## Milestone 1 foundation
-
-Implemented: TypeScript domain models, configurable sample fridge/freezer, independent multi-category storage purposes, immutable inventory operations, expiration calculations, runtime data validation, and an asynchronous persistence interface with a browser-storage adapter.
-
-Repository: https://github.com/guoxinyi0811/brain-off (public). Nothing has been deployed.
+Repository: https://github.com/guoxinyi0811/brain-off
 
 ## Run
 
-Requires Node.js 24 or newer. From this folder:
+Requires Node.js 24 or newer.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the Local URL printed by Vite. To verify and build:
+Open the Local URL printed by Vite. Development data stays in that browser and origin.
 
 ```sh
 npm test
@@ -36,38 +22,69 @@ npm run build
 npm run demo
 ```
 
-Tests use Node's built-in test runner and TypeScript stripping; no test framework dependency is needed. TypeScript performs a separate strict type check. The demo uses memory storage and a fixed example date, and does not persist across process restarts.
+The demo uses memory storage and a fixed date; it does not persist across process restarts.
+
+## Current layout
+
+The initial configuration follows the owner's reference photos. It is an orthographic approximation of relative structure, not a physical measurement or a photo tracing.
+
+| Location | Intended purpose |
+| --- | --- |
+| Chilled shelf 1 | Groceries |
+| Chilled shelf 2 | Eggs, raw meat |
+| Chilled shelf 3 | Jarred sauces and condiments |
+| Chilled shelf 4 | Cooked food, leftovers |
+| Crisper | Vegetables, fruits |
+| Freezer drawers 1–3 | Unassigned |
+| Top full-width door basket | Unassigned |
+| Upper-left door basket | Butter, miso |
+| Lower-left door basket | Chinese cooking condiments |
+| Right tall door basket | Japanese cooking condiments, oyster sauce |
+| Bottom wide door basket | Alcoholic and nonalcoholic beverages |
+
+The door has five individually positioned baskets. The tall right basket overlaps the vertical ranges of the two left baskets; no uniform grid is imposed. The freezer's three drawers are schematic because their geometry is not visible in the supplied interior photos. No food from the photos is seeded as inventory. Personal reference photos are not included in this repository.
+
+## Visual and interaction design
+
+Flat, precise ink outlines on a near-white background. Restrained silver-blue fill indicates hover/selection, inspired by refrigerator lighting. Expiration uses explicit wording and a separate `!` marker, so it never depends on the blue selection color. No glow, shadows, heavy gradients, marketing copy or decorative illustrations.
+
+Storage regions use configured SVG outlines with native HTML buttons positioned over the same geometry. They support Tab, Enter and Space and expose location, item count, expiration attention count and selection to assistive technology. The source order is chilled shelves/crisper, freezer drawers, then door baskets from top through left pair/right basket to bottom. A detail panel shows the selected location and its editable purposes. Dialogs retain focus behavior and Escape dismissal.
+
+Purpose assignments are many-to-many and descriptive. They do not enforce food-safety rules, move food or delete inventory.
 
 ## Architecture
 
-- `src/domain`: models, pure expiration calculations, immutable operations, runtime validation.
-- `src/config/sample-fridge.ts`: replaceable seed configuration with stable IDs and no food inventory.
-- `src/persistence`: `InventoryRepository` async load/save contract; `LocalStorageRepository` accepts a storage implementation. In a browser, construct it with `window.localStorage`.
-- `src/ui`: React spatial interface, dialogs, expiration form mapping, and persistence hook. Domain operations run before saving; UI inventory updates only after a successful save.
-- `tests`: domain behavior and persistence boundary tests.
+- `src/domain`: type-safe models, immutable inventory operations, calendar-date expiration calculations and runtime data validation.
+- `src/config/sample-fridge.ts`: physical locations, stable IDs, category/purpose defaults and one-time configuration upgrades.
+- `src/config/fridge-geometry.ts`: drawing dimensions, cabinet/door frames, lines and independently positioned region geometry. These drawing units are separate from inventory records. A region can override its outline path.
+- `src/persistence`: async `InventoryRepository` contract and `LocalStorageRepository` adapter.
+- `src/ui`: React interface, controlled dialogs, expiration input mapping and the persistence hook.
+- `tests`: domain, persistence, configuration, geometry relationships and expiration input regression tests using Node's built-in test runner.
 
-`StorageNode.parentId` describes the physical tree. Only nodes with `canHoldItems` accept inventory. Purpose assignments may target any node and associate multiple categories; they are descriptive, not placement restrictions or food-safety rules. They do not move or delete inventory, and do not implicitly inherit down the tree.
+### Configuration upgrades
 
-Renames and reordering retain location IDs. Occupied locations and nodes with children cannot be removed. IDs are provided by callers (the future UI can use `crypto.randomUUID()`). Every operation returns a validated copy. Configuration edits with existing inventory must preserve IDs or explicitly migrate affected items.
+Inventory snapshots remain schema version 1. The optional `fridge.configurationVersion` records the programmatic sample configuration revision.
 
-Expiration records retain input method, original text, recorded calendar date, and the exact or computed estimated date. Estimates also retain their original numeric value and unit. A future range can be introduced as another discriminated-union variant with a schema migration. Free-text parsing is not implemented: a UI must supply a structured duration alongside the retained text.
+Existing `sample-fridge` snapshots without a revision upgrade once to revision 2. Existing `upper-shelf`, `lower-shelf`, `produce-drawer` and `freezer-shelf` IDs remain stable. The old freezer shelf becomes the first freezer drawer. The upgrade adds missing locations/categories and applies the owner's corrected purposes once. Food records, IDs, location references and original expiration input remain unchanged. Extra custom locations/categories remain, and independently identified custom fridges are untouched.
 
-Date arithmetic uses calendar dates without time-of-day or timezone conversion. The caller supplies today's local date. The proposed default warning window is three days, inclusive; dates in the past use `past-date`, today through the threshold use `due-soon`, and later dates use `later`. Estimates retain an independent `isEstimated` flag. These statuses are organizational reminders, not food-safety assessments.
+The upgraded snapshot is validated and saved before the new layout is exposed. Failed load/save operations use the retry/error UI without clearing stored data. Subsequent reloads retain user-edited purposes; they do not reapply defaults. Future configuration changes for existing users should include an explicit revision/migration.
 
-## Persistence and limitations
+### Expiration
 
-Version 1 snapshots are validated before saving and after loading. Unknown versions, malformed records, storage-denied errors and quota failures reject with `PersistenceError`; failed loads never silently reset stored data. The UI displays a load error with a retry action, or a save error that preserves form input. Data reset/recovery tooling is not yet implemented.
+Exact dates and estimates retain original input, recorded date and exact/computed date. Estimates retain numeric duration and unit. Editing a food name or location does not renew its estimate. Date arithmetic uses calendar days and the browser supplies today's local date; the reminder threshold defaults to three days inclusive. Estimated status remains visibly distinct from an exact date.
 
-Local storage is limited to the same browser and origin. The adapter is single-client; concurrent tabs can overwrite one another. Cross-device synchronization is an accepted product requirement deferred beyond milestone 1. The async boundary permits a cloud adapter without changing the basic domain entities, but authentication, access rules, conflict handling, retries and offline behavior still require implementation. Supabase is a candidate, not a chosen dependency.
+Dates are organizational reminders, not food-safety assessments. No automated placement or food-safety recommendation feature is implemented.
 
-## Decisions and next milestone
+## Verification
 
-Milestone 2 verification: 13 automated tests cover domain/persistence behavior and expiration form mapping, including preserving older estimates when food is moved. Strict TypeScript checking and the Vite production build pass. Browser QA verified add, reload persistence, move, multi-purpose editing, exact-date/expired display, confirmed removal, and Escape dismissal with focus returning to the opener. Browser checks were performed in the available narrow side-panel viewport; a separate full-width desktop browser check remains outstanding. Storage failures are covered by adapter tests; browser permission/quota failure UI has not been exercised in a real browser.
+17 automated tests pass, along with strict TypeScript checking and the Vite production build. Configuration tests cover the corrected purposes, 13 unique interactive regions, staggered door geometry and an inventory-preserving, idempotent upgrade.
 
-Confirmed: name **brain off**; React/TypeScript/Vite direction; spatial front view remains central; configurable initial structure; independent storage purposes; preservation of expiration provenance; eventual cross-device synchronization.
+Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
-Reversible implementation defaults: sample layout without door sections, three-day warning threshold, whole-day/week estimates, no quantities or batch merging. The seed is illustrative and is not claimed to represent the user's actual fridge.
+## Limits and next decisions
 
-Next, after review: a searchable inventory view for shopping, additional responsive/accessibility QA, and a concrete cloud-sync design. Homepage entry points for “find something” and “put something away” are recorded UX proposals, not approved scope. Cloud provider, authentication, hosting, quantities and estimated ranges remain open.
+Data stays in the same browser and origin. Cross-device sync is accepted future scope; provider, authentication, access rules, offline/retry behavior and conflict handling remain undecided. The local adapter is single-client and concurrent tabs can overwrite changes.
 
-The owner has authorized uploading this milestone and syncing future verified project updates to this GitHub repository. Website deployment, GitHub Releases, and changing repository visibility remain separate decisions. No open-source license or authorship claims have been invented.
+No setup editor, quantity/batch merging, automatic photo recognition, search/shopping inventory view or notifications have been added. The application is not deployed.
+
+The owner has authorized syncing completed, verified project updates to GitHub. Deployment and GitHub Releases remain separate decisions. No open-source license or unsupported authorship claims have been added.
