@@ -18,9 +18,9 @@ test('explicitly changing an estimate records the new input and current date', (
   });
 });
 
-test('exact-date input preserves the chosen date and rejects missing estimate values', () => {
+test('legacy exact-date input remains editable and blank estimates fall back without fabricating a date', () => {
   assert.deepEqual(resolveExpirationInput({ ...input, mode: 'exact', date: '2026-10-17' }), {
     kind: 'exact', originalInput: '2026-10-17', recordedOn: '2026-10-18', date: '2026-10-17',
   });
-  assert.throws(() => resolveExpirationInput({ ...input, duration: '' }));
+  assert.equal(resolveExpirationInput({ ...input, duration: '' }), null);
 });

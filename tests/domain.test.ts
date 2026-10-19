@@ -77,7 +77,8 @@ test('validation rejects cycles, orphan nodes, unsupported versions and inconsis
   assert.throws(() => validateState(orphan), /parent/);
   assert.throws(() => validateState({ ...createSampleFridge(), schemaVersion: 2 }), /version/);
   const bad = addItem(createSampleFridge(), milk());
-  if (bad.items[0]!.expiration.kind === 'estimate') bad.items[0]!.expiration.estimatedDate = '2026-10-30';
+  const badExpiry = bad.items[0]!.expiration;
+  if (badExpiry?.kind === 'estimate') badExpiry.estimatedDate = '2026-10-30';
   assert.throws(() => validateState(bad), /Inconsistent/);
   assert.throws(() => validateState(null));
 });
