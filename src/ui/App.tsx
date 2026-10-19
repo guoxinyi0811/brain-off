@@ -35,17 +35,17 @@ export function App() {
   return <div className="app">
     <a className="skip-link" href="#workspace">跳到冰箱</a>
     <header className="topbar"><a className="wordmark" href="#" aria-label="brain off 首页">brain off</a>
-      <span className="local-badge">本地保存</span></header>
+      <span className="local-badge"><i aria-hidden="true" />本地保存</span></header>
     <main>
-      <div className="page-heading"><h1>我的冰箱</h1>{state && <p>{state.items.length} 件食物<span aria-hidden="true"> / </span>{due.length} 件需留意</p>}</div>
+      <div className="page-heading"><h1>我的冰箱<span className="heading-period" aria-hidden="true">.</span></h1>{state && <p><strong>{state.items.length.toString().padStart(2, '0')}</strong> 件食物<span aria-hidden="true"> / </span><strong>{due.length.toString().padStart(2, '0')}</strong> 件需留意</p>}</div>
       <div className="status-line" role="status" aria-live="polite">{saving ? '保存中…' : notice}</div>
       {loading ? <div className="loading-state">正在打开冰箱…</div> : loadError || !state ? <section className="load-error" role="alert"><h2>暂时无法读取冰箱</h2><p>浏览器存储不可用或已有数据无法读取。原数据未被覆盖。</p><button className="primary" onClick={() => void load()}>重新读取</button></section> : <>
         <section className="workspace" id="workspace" aria-label="冰箱和位置详情">
           <div className="spatial-panel"><Fridge state={state} selected={selectedId} today={today} onSelect={selectLocation} /></div>
-          <aside className="detail-panel" aria-label="所选位置详情">
+          <aside className="detail-panel" aria-label="所选位置详情" tabIndex={-1}>
             {location ? <><div className="location-heading"><div><p className="location-parent">{label(state.locations.find(n => n.id === location.parentId)?.label ?? state.fridge.name)}</p><h2>{label(location.label)}</h2></div><span className="item-count">{items.length} 件</span></div>
               <div className="purpose-row"><div className="purpose-tags">{assigned.map(id => <span key={id}>{label(state.categories.find(c => c.id === id)!.label)}</span>)}</div><button className="text-button" onClick={() => { setError(''); setPurposeDraft(assigned); }}>设置用途</button></div>
-              <button className="primary add-button" onClick={() => setForm('new')} disabled={saving}><span aria-hidden="true">＋</span> 放入食物</button>
+              <button className="primary add-button" onClick={() => setForm('new')} disabled={saving}><span aria-hidden="true">＋</span> 添加食物</button>
               <div className="item-list">{items.length ? [...items].sort((a, b) => expiryLabel(a.expiration, today).daysRemaining - expiryLabel(b.expiration, today).daysRemaining).map(item => {
                 const expiry = expiryLabel(item.expiration, today);
                 return <article key={item.id} className="item-card"><div className="item-top"><h3>{item.name}</h3><p className={`expiry ${expiry.status}`}>{expiry.text}</p></div><div className="item-bottom"><span>{expiry.isEstimated ? '预估' : '到期'} · {expiry.date}</span><div><button className="text-button" aria-label={`编辑或移动${item.name}`} onClick={() => setForm(item)}>编辑 / 移动</button><button className="text-button remove-button" aria-label={`移除${item.name}`} onClick={() => { setError(''); setDeleting(item); }}>移除</button></div></div></article>;
