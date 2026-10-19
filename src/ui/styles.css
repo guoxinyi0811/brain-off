@@ -46,6 +46,8 @@ h1 { font-size: 35px; font-weight: 600; letter-spacing: -1.8px; line-height: 1.2
 .page-heading p strong { color: var(--ink); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; margin-right: 4px; }
 .page-heading p span { padding-inline: 13px; color: #b3bdc4; }
 .status-line { min-height: 22px; padding-top: 6px; color: var(--muted); font-size: 11px; }
+.storage-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-block: 12px; padding: 12px; border-left: 2px solid #405e73; background: var(--silver); font-size: 12px; }
+.storage-notice p { flex: 1; min-width: min(180px, 100%); }
 .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(265px, 1fr); gap: 58px; align-items: start; padding-block: 16px 35px; }
 .spatial-panel { min-width: 0; }
 .fridge-visual { width: 100%; max-width: 540px; margin: auto; }

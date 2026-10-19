@@ -12,7 +12,7 @@ import { quantityLabel } from '../domain/quantity.ts';
 import { BackupDialog } from './BackupDialog.tsx';
 
 export function App() {
-  const { state, loading, saving, loadError, load, commit, notice, readRecovery, replace } = useInventory();
+  const { state, loading, saving, loadError, load, commit, notice, externalNotice, readRecovery, replace } = useInventory();
   const [backupOpen, setBackupOpen] = useState(false);
   const [selected, setSelected] = useState('upper-shelf');
   const [today, setToday] = useState(localToday);
@@ -58,6 +58,7 @@ export function App() {
       <div className="page-heading"><h1>{view === 'fridge' ? '我的冰箱' : '库存'}<span className="heading-period" aria-hidden="true">.</span></h1>{state && <p><strong>{state.items.length.toString().padStart(2, '0')}</strong> 条库存<span aria-hidden="true"> / </span><strong>{due.length.toString().padStart(2, '0')}</strong> 条需留意</p>}</div>
       <nav className="view-switch" aria-label="查看方式"><button aria-pressed={view === 'fridge'} onClick={() => setView('fridge')}>冰箱</button><button aria-pressed={view === 'inventory'} onClick={() => setView('inventory')}>库存</button></nav>
       <div className="status-line" role="status" aria-live="polite">{saving ? '保存中…' : notice}</div>
+      {externalNotice && <div className="storage-notice" role="status"><p>{externalNotice}</p><button className="secondary" disabled={loading || saving || !!form || purposes !== null || !!deleting || backupOpen} onClick={() => void load()}>重新读取</button></div>}
       {loading ? <div className="loading-state">正在打开冰箱…</div> : loadError || !state ? <section className="load-error" role="alert"><h2>暂时无法读取冰箱</h2><p>浏览器存储不可用或已有数据无法读取。原数据未被覆盖。</p><button className="primary" onClick={() => void load()}>重新读取</button></section> : <>
         {view === 'inventory' ? <InventoryView state={state} today={today} query={query} onQuery={setQuery} busy={saving}
           onLocate={locateItem} onEdit={setForm} onRemove={item => { setError(''); setDeleting(item); }} onAdd={() => setForm('new')} /> : <><section className="workspace" id="workspace" aria-label="冰箱和位置详情">
