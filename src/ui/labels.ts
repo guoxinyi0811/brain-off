@@ -1,4 +1,4 @@
-import type { Expiration } from '../domain/model.ts';
+import type { Expiration, InventoryState, StorageNode } from '../domain/model.ts';
 import { expirationStatus } from '../domain/expiration.ts';
 
 const labels: Record<string, string> = {
@@ -8,6 +8,31 @@ const labels: Record<string, string> = {
   'Beverages': '饮料', 'Wine': '酒类', 'Condiments': '酱料', 'Other': '其他',
 };
 export const label = (text: string) => labels[text] ?? text;
+export function storageLocations(state: InventoryState): StorageNode[] {
+  const result: StorageNode[] = [];
+  function visit(parentId: string | null) {
+    const children = state.locations.filter(node => node.parentId === parentId).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+    for (const node of children) {
+      if (node.canHoldItems) result.push(node);
+      visit(node.id);
+    }
+  }
+  visit(null);
+  return result;
+}
+export function locationName(state: InventoryState, id: string): string {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  let current: string | null = id;
+  while (current && !seen.has(current)) {
+    seen.add(current);
+    const node = state.locations.find(location => location.id === current);
+    if (!node) break;
+    names.unshift(label(node.label));
+    current = node.parentId;
+  }
+  return names.join(' / ') || id;
+}
 export function localToday() {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
