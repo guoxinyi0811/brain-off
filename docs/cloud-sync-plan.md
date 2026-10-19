@@ -1,6 +1,6 @@
 # Cross-device synchronization — proposed next milestone
 
-Status: design proposal, not implemented. Provider, login method and deployment remain undecided. No external account, service, database or authentication has been created.
+Status: cloud design proposal, not implemented. Local IndexedDB transactions, revision conflicts and page notifications are implemented separately in [storage-design.md](storage-design.md); they do not synchronize devices. Provider, login method and deployment remain undecided. No external account, service, database or authentication has been created.
 
 ## Product outcome
 
