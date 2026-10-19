@@ -65,7 +65,7 @@ Purpose assignments are many-to-many and descriptive. They do not enforce food-s
 - `src/domain`: type-safe models, immutable inventory operations, calendar-date expiration calculations and runtime data validation.
 - `src/config/sample-fridge.ts`: physical locations, stable IDs, category/purpose defaults and one-time configuration upgrades.
 - `src/config/fridge-geometry.ts`: drawing dimensions, cabinet/door frames, lines and independently positioned region geometry. These drawing units are separate from inventory records. A region can override its outline path.
-- `src/persistence`: async `InventoryRepository` contract and `LocalStorageRepository` adapter.
+- `src/persistence`: async repository contracts, the default `IndexedDbRepository`, and a retained legacy `LocalStorageRepository` adapter.
 - `src/ui`: React interface, controlled dialogs, expiration input mapping and the persistence hook.
 - `tests`: domain, persistence, configuration, geometry relationships and expiration input regression tests using Node's built-in test runner.
 
@@ -85,7 +85,7 @@ Dates are organizational reminders, not food-safety assessments. Placement sugge
 
 ## Verification
 
-55 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
+71 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
@@ -93,7 +93,7 @@ Inventory browser checks covered creating records across compartments, name sear
 
 ## Limits and next decisions
 
-Data stays in the same browser and origin. Cross-device sync is accepted future scope; provider, authentication and deployment remain undecided. A provider-neutral proposal covering authorization, revision conflicts, import and verification is in [docs/cloud-sync-plan.md](docs/cloud-sync-plan.md). It is not implemented. The local adapter is single-client and concurrent tabs can overwrite changes.
+Data stays in the same browser and origin. Cross-device sync is accepted future scope; provider, authentication and deployment remain undecided. A provider-neutral proposal covering authorization, revision conflicts, import and verification is in [docs/cloud-sync-plan.md](docs/cloud-sync-plan.md). It is not implemented. The default local adapter rejects stale writes from other pages and keeps active inputs intact; see [the implemented storage design](docs/storage-design.md).
 
 No setup editor, batch merging, automatic photo recognition or notifications have been added. The application is not deployed.
 
@@ -134,12 +134,19 @@ Open **备份** in the header to export the currently displayed fridge as a loca
 
 Import accepts the version-1 `brain-off` backup envelope or a legacy raw schema-version-1 inventory snapshot (including UTF-8 BOM). It validates the complete snapshot before showing the fridge name, item/location counts and export time. Nothing is replaced until **恢复这份备份** is chosen. This restores the whole fridge instead of merging potentially conflicting IDs. Empty backups can replace nonempty stock, with the counts shown explicitly. Old sample configurations are upgraded in the preview using the existing migration; food IDs, quantities and expiration inputs remain unchanged. Canceling the preview does not change inventory.
 
-Before replacement, the local repository writes the exact previous primary data to a separate recovery key. If the primary key was absent, it checkpoints the empty fridge that was displayed. Failure to write the checkpoint aborts replacement. If the subsequent primary write fails, the old primary stays intact and the checkpoint is available. Only one recovery point is retained: each replacement attempt that successfully writes a checkpoint replaces the previous point, even if the later primary write fails. Recovery can be previewed, exported and restored after a reload; restoring it first checkpoints the current fridge as well.
+The default IndexedDB repository checkpoints the exact previous primary JSON and replaces inventory in one atomic transaction. If either write fails, both inventory and the previous recovery point remain unchanged. If no primary snapshot existed, it checkpoints the empty fridge that was displayed. One recovery point is retained per successful replacement; restoring it checkpoints the current fridge as well. Recovery can be previewed, exported and restored after a reload.
 
-A valid file can also replace an unreadable primary inventory through the same backup dialog. The unreadable original is retained byte-for-byte and offered as a raw text download, rather than being offered for blind restoration. Corrupt recovery metadata is reported without deleting it. Known changes to the primary key since this tab loaded/saved are checked before and after checkpoint creation and abort import with a refresh message. These checks are not a complete cross-tab transaction protocol; ordinary simultaneous inventory edits remain single-client as documented above.
+A valid file can also repair an unreadable inventory JSON through the same backup dialog. The unreadable original is retained byte-for-byte for a raw text download. Corrupt recovery metadata is reported without deleting it. Every save and restore checks an expected revision within the write transaction; stale versions are rejected with the current form input preserved. Migration archives the old LocalStorage values without deleting them. Details and remaining browser-storage limits are in [docs/storage-design.md](docs/storage-design.md).
 
 Files are limited to 5 MiB and 10,000 inventory records, 1,000 locations, 200 categories and 5,000 purpose assignments. Invalid JSON, unsupported formats/schema versions, inconsistent dates, invalid quantities, broken references and graph cycles reject without partially importing or truncating data. Export applies the same size/count limits. Serialization/parsing is in `src/domain/backup.ts`; the replace/checkpoint contract extends the replaceable repository interface.
 
 Verification for this update: 55 automated tests, strict TypeScript and production build passed. Tests cover full round trips, legacy/BOM input, limits, invalid snapshots, exact-byte recovery, checkpoint-before-primary ordering, checkpoint/primary/read failures, corrupt originals and observed concurrent changes. Browser QA verified an actual downloaded file by reading it back, rejected malformed JSON, previewed before replacement, restored quantities and original dates, reloaded, restored the previous checkpoint, and checked the 319px layout without horizontal overflow. The original fridge and a clean recovery point were restored after QA. Browser storage-permission/quota failures are tested at the repository boundary, not simulated in a real browser.
 
 Cloud synchronization, voice recognition and deployment remain unimplemented. Backup files support manual transfer; they do not provide automatic device synchronization.
+
+
+## Storage optimization update
+
+IndexedDB is now the default local persistence engine. Revision-checked transactions prevent upgraded pages from silently overwriting one another and commit inventory plus the recovery point together. Old LocalStorage data is migrated once and retained unchanged. A compact external-update notice offers explicit reload, while open editors keep their input. The backup JSON format and domain model remain unchanged.
+
+71 automated tests, TypeScript and the production build pass. Two real same-origin browser pages verified stale-write rejection, retained drafts, reload/retry, reverse notifications, unchanged expiration/quantity and migration of the old recovery point. Test data was removed. Browser screenshots were unavailable during this stage. See [storage-design.md](docs/storage-design.md) for implementation, migration, verification and limits.
