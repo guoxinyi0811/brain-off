@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { InventoryState } from '../domain/model.ts';
 import type { InventoryRepository } from '../persistence/repository.ts';
 import { LocalStorageRepository } from '../persistence/repository.ts';
-import { createSampleFridge } from '../config/sample-fridge.ts';
+import { createSampleFridge, upgradeFridgeConfiguration } from '../config/sample-fridge.ts';
 
 export function useInventory() {
   const repository = useRef<InventoryRepository | null>(null);
@@ -18,7 +18,11 @@ export function useInventory() {
     setLoadError(false);
     try {
       repository.current ??= new LocalStorageRepository(window.localStorage);
-      const next = await repository.current.load() ?? createSampleFridge();
+      const loaded = await repository.current.load();
+      const next = loaded ? upgradeFridgeConfiguration(loaded) : createSampleFridge();
+      // Persist the upgrade before exposing it. Failed saves leave the old
+      // stored snapshot intact and use the existing retry/error flow.
+      if (loaded && next !== loaded) await repository.current.save(next);
       current.current = next;
       setState(next);
     } catch {
