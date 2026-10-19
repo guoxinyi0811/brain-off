@@ -31,6 +31,7 @@ export interface InventoryItem {
   name: string;
   locationId: string;
   expiration: Expiration | null;
+  quantity?: { value: number; unit: string };
 }
 export interface InventoryState {
   schemaVersion: 1;

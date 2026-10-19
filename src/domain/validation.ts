@@ -1,5 +1,6 @@
 import type { InventoryState } from './model.ts';
 import { addDays, calendarDay, estimatedExpiration, productionExpiration } from './expiration.ts';
+import { validateQuantity } from './quantity.ts';
 
 function ensure(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -47,6 +48,7 @@ export function validateState(value: unknown): asserts value is InventoryState {
   }
   for (const item of state.items) {
     ensure(text(item.name) && nodes.get(item.locationId)?.canHoldItems, 'Invalid item or storage location');
+    if (item.quantity !== undefined) validateQuantity(item.quantity);
     const expiry = item.expiration;
     if (expiry === null) continue;
     ensure(record(expiry) && text(expiry.originalInput) && text(expiry.recordedOn), 'Invalid expiration');
