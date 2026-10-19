@@ -4,6 +4,14 @@ A spatial refrigerator inventory app. Select a real storage location, inspect it
 
 Repository: https://github.com/guoxinyi0811/brain-off
 
+## Inventory view
+
+The default screen remains the spatial refrigerator. Switch to Inventory for a compact shopping view of all food. Search by name, combine a precise storage-location filter with expiration status, and sort by earliest expiration or name. Name matching normalizes case, whitespace and full-width characters; it is substring search rather than fuzzy matching.
+
+The three-day filter includes today through day 3; past dates are a separate filter. Estimates stay explicitly labeled and use their existing dates. The location button on each result returns to the refrigerator, selects and focuses its region, and highlights the matching food in location details. Search/filter state survives switching views but resets on a browser reload.
+
+Inventory supports the existing add/edit/move/remove flows. Adding under a location filter defaults to that location. Location choices include compartment context and follow physical order. Editing a result out of the current filter updates the list immediately; dialog focus returns to a stable view control if its original row has disappeared. Browser data and fridge configuration remain unchanged by searches.
+
 ## Run
 
 Requires Node.js 24 or newer.
@@ -77,14 +85,16 @@ Dates are organizational reminders, not food-safety assessments. No automated pl
 
 ## Verification
 
-17 automated tests pass, along with strict TypeScript checking and the Vite production build. Configuration tests cover the corrected purposes, 13 unique interactive regions, staggered door geometry and an inventory-preserving, idempotent upgrade.
+23 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
+Inventory browser checks covered creating records across compartments, name search, locating a result and focusing its region, retaining filters across view switches, expired filtering, editing a record out of its filter, defaulting new food to the filtered location, deletion/focus recovery, and layouts at 390px/1280px without horizontal overflow. Browser QA records were removed after testing.
+
 ## Limits and next decisions
 
-Data stays in the same browser and origin. Cross-device sync is accepted future scope; provider, authentication, access rules, offline/retry behavior and conflict handling remain undecided. The local adapter is single-client and concurrent tabs can overwrite changes.
+Data stays in the same browser and origin. Cross-device sync is accepted future scope; provider, authentication and deployment remain undecided. A provider-neutral proposal covering authorization, revision conflicts, import and verification is in [docs/cloud-sync-plan.md](docs/cloud-sync-plan.md). It is not implemented. The local adapter is single-client and concurrent tabs can overwrite changes.
 
-No setup editor, quantity/batch merging, automatic photo recognition, search/shopping inventory view or notifications have been added. The application is not deployed.
+No setup editor, quantity/batch merging, automatic photo recognition or notifications have been added. The application is not deployed.
 
 The owner has authorized syncing completed, verified project updates to GitHub. Deployment and GitHub Releases remain separate decisions. No open-source license or unsupported authorship claims have been added.
