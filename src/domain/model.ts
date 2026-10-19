@@ -1,6 +1,6 @@
 export type DateOnly = string;
 
-export interface Fridge { id: string; name: string }
+export interface Fridge { id: string; name: string; configurationVersion?: number }
 export interface StorageNode {
   id: string;
   fridgeId: string;
