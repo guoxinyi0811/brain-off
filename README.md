@@ -81,11 +81,11 @@ The upgraded snapshot is validated and saved before the new layout is exposed. F
 
 Exact dates and estimates retain original input, recorded date and exact/computed date. Estimates retain numeric duration and unit. Editing a food name or location does not renew its estimate. Date arithmetic uses calendar days and the browser supplies today's local date; the reminder threshold defaults to three days inclusive. Estimated status remains visibly distinct from an exact date.
 
-Dates are organizational reminders, not food-safety assessments. No automated placement or food-safety recommendation feature is implemented.
+Dates are organizational reminders, not food-safety assessments. Placement suggestions match configured purposes; they do not assess food safety.
 
 ## Verification
 
-32 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
+41 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
@@ -95,7 +95,7 @@ Inventory browser checks covered creating records across compartments, name sear
 
 Data stays in the same browser and origin. Cross-device sync is accepted future scope; provider, authentication and deployment remain undecided. A provider-neutral proposal covering authorization, revision conflicts, import and verification is in [docs/cloud-sync-plan.md](docs/cloud-sync-plan.md). It is not implemented. The local adapter is single-client and concurrent tabs can overwrite changes.
 
-No setup editor, quantity/batch merging, automatic photo recognition or notifications have been added. The application is not deployed.
+No setup editor, batch merging, automatic photo recognition or notifications have been added. The application is not deployed.
 
 The owner has authorized syncing completed, verified project updates to GitHub. Deployment and GitHub Releases remain separate decisions. No open-source license or unsupported authorship claims have been added.
 
@@ -115,3 +115,15 @@ Validation accepts the extended expiration variants and legacy schema-version-1 
 Confirmed future requirement: voice input should produce an editable structured draft (food name, location, expiration input and its origin), then allow the user to check/correct it before saving into the fridge. Speech recognition, microphone access and automatic placement are not implemented in this update. Recognition must not silently invent a production date or overwrite existing stock. Whether saving needs explicit confirmation versus an editable undo flow remains a future UX decision.
 
 Validation for this update: 32 automated tests, TypeScript and the production build passed. Browser checks covered production-date-plus-duration preview, an automatic estimate using a past purchase date, persistence after reload, unchanged expiration after renaming/moving, unknown-date filtering and manual override to remaining weeks. Test-only browser records were removed afterward.
+
+## Daily-use update: quantities and placement suggestions
+
+Items now accept an optional quantity with a positive numeric value and a free-text unit (up to 16 characters). Examples: 3 boxes, 0.5 kg, or a number without a unit. Common units are suggested by a native datalist. Leave both fields blank when the quantity is unknown; clearing both removes a previously entered quantity. Zero/negative/nonfinite values and values above 1 billion are rejected. Zero is not an automatic delete action. Editing quantities preserves IDs, location and the original expiration. Legacy snapshots without quantities load unchanged.
+
+Quantities appear beside names in inventory and location details, and alongside the first visible food name in the desktop fridge diagram. Diagram counters and page totals count inventory records, not a sum of mixed units or packages. Same-name entries remain separate records; there is no batch merging, unit conversion or automatic consumption tracking.
+
+Placement suggestions use conservative name aliases (including full-width/case normalization) or an explicitly selected food subtype to match the refrigerator's current purpose assignments. For example, eggs match the configured egg area; butter/miso, Chinese sauces, oyster sauce and beverages match the corresponding door baskets. Food subtypes used for expiration and location purposes remain separate concepts. Unrecognized names or purposes with no configured storage area produce no suggestion. No generic fallback location is invented.
+
+Suggestions show the full location path and matched purpose. The person explicitly chooses a suggestion or keeps/changes the ordinary location selector. Typing or changing a name never silently moves an item. Multiple matches follow physical order. Renaming locations preserves stable IDs; changing purposes changes future suggestions without moving inventory. These are organizational matches to the owner's settings, not food-safety recommendations or capacity checks.
+
+Validation for this update: 41 automated tests, TypeScript and the production build passed. Browser checks covered entering packages, applying a recommendation with mouse and keyboard, overriding the suggested location, reload persistence, editing/clearing quantities while preserving expiration, rejecting zero, fractional weights and narrow-screen layout. Test-only records were removed afterward. Voice recognition, backups and cross-device synchronization remain future work.
