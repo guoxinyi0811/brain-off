@@ -2,8 +2,7 @@ import type { InventoryState } from '../domain/model.ts';
 import { validateState } from '../domain/validation.ts';
 import { validTimestamp } from '../domain/backup.ts';
 
-// Async contract permits a later network adapter. Cloud auth, conflicts and
-// concurrent updates still need an explicit design; this adapter is single-client.
+// UI/domain stay independent of the persistence engine and conflict token format.
 export interface InventoryRepository {
   load(): Promise<InventoryState | null>;
   save(state: InventoryState): Promise<void>;
@@ -16,6 +15,7 @@ export interface RecoveryPoint {
 export interface BackupRepository extends InventoryRepository {
   loadRecovery(): Promise<RecoveryPoint | null>;
   replaceWithRecovery(state: InventoryState, fallback: InventoryState | null): Promise<void>;
+  hasExternalChanges?(): Promise<boolean>;
 }
 export interface KeyValueStorage {
   getItem(key: string): string | null;
@@ -23,6 +23,23 @@ export interface KeyValueStorage {
 }
 export class PersistenceError extends Error {
   constructor(message: string, cause: unknown) { super(message, { cause }); this.name = 'PersistenceError'; }
+}
+export class StorageConflictError extends Error {
+  constructor(message = '其他页面已更新库存，本次修改未保存。请保留当前输入，关闭编辑后重新读取。') {
+    super(message); this.name = 'StorageConflictError';
+  }
+}
+export function decodeRecovery(stored: string | null): RecoveryPoint | null {
+  if (stored === null) return null;
+  const point = JSON.parse(stored);
+  if (!point || point.formatVersion !== 1 || !validTimestamp(point.capturedAt)
+    || point.raw !== null && typeof point.raw !== 'string') throw new Error('Invalid recovery point');
+  let snapshot: InventoryState | null = null;
+  if (point.raw !== null) {
+    try { const value: unknown = JSON.parse(point.raw); validateState(value); snapshot = value; }
+    catch { /* Corrupt originals remain downloadable without blind restoration. */ }
+  }
+  return { capturedAt: point.capturedAt, raw: point.raw, snapshot };
 }
 export class LocalStorageRepository implements BackupRepository {
   private storage: KeyValueStorage;
@@ -46,16 +63,7 @@ export class LocalStorageRepository implements BackupRepository {
   async loadRecovery(): Promise<RecoveryPoint | null> {
     try {
       const stored = this.storage.getItem(`${this.key}:recovery`);
-      if (stored === null) return null;
-      const point = JSON.parse(stored);
-      if (!point || point.formatVersion !== 1 || !validTimestamp(point.capturedAt)
-        || point.raw !== null && typeof point.raw !== 'string') throw new Error('Invalid recovery point');
-      let snapshot: InventoryState | null = null;
-      if (point.raw !== null) {
-        try { const value: unknown = JSON.parse(point.raw); validateState(value); snapshot = value; }
-        catch { /* Retain corrupt originals for download, without offering a blind restore. */ }
-      }
-      return { capturedAt: point.capturedAt, raw: point.raw, snapshot };
+      return decodeRecovery(stored);
     } catch (cause) { throw new PersistenceError('无法读取恢复副本，副本未被更改。', cause); }
   }
   async replaceWithRecovery(state: InventoryState, fallback: InventoryState | null): Promise<void> {
