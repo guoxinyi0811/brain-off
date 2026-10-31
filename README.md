@@ -85,7 +85,7 @@ Dates are organizational reminders, not food-safety assessments. Placement sugge
 
 ## Verification
 
-87 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
+91 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting, physical location ordering and bounded refrigerator-map previews.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
@@ -120,7 +120,7 @@ Validation for this update: 32 automated tests, TypeScript and the production bu
 
 Items now accept an optional quantity with a positive numeric value and a free-text unit (up to 16 characters). Examples: 3 boxes, 0.5 kg, or a number without a unit. Common units are suggested by a native datalist. Leave both fields blank when the quantity is unknown; clearing both removes a previously entered quantity. Zero/negative/nonfinite values and values above 1 billion are rejected. Zero is not an automatic delete action. Editing quantities preserves IDs, location and the original expiration. Legacy snapshots without quantities load unchanged.
 
-Quantities appear beside names in inventory and location details, and alongside the first visible food name in the desktop fridge diagram. Diagram counters and page totals count inventory records, not a sum of mixed units or packages. Same-name entries remain separate records; there is no batch merging, unit conversion or automatic consumption tracking.
+Quantities appear beside names in inventory and location details, and alongside visible food names in the fridge diagram. Diagram counters and page totals count inventory records, not a sum of mixed units or packages. Same-name entries remain separate records; there is no batch merging, unit conversion or automatic consumption tracking.
 
 Placement suggestions use conservative name aliases (including full-width/case normalization) or an explicitly selected food subtype to match the refrigerator's current purpose assignments. For example, eggs match the configured egg area; butter/miso, Chinese sauces, oyster sauce and beverages match the corresponding door baskets. Food subtypes used for expiration and location purposes remain separate concepts. Unrecognized names or purposes with no configured storage area produce no suggestion. No generic fallback location is invented.
 
@@ -159,3 +159,11 @@ New-item forms include an optional **语音 / 一句话录入** disclosure. A ty
 Recognition uses the native/prefixed browser SpeechRecognition service only after an explicit click, with a typed fallback. Some browsers process audio online; the UI explains this before starting. Closing/collapsing cancels capture. No audio is stored and no app speech backend or LLM is added. Browser/device compatibility and live microphone behavior are not yet verified.
 
 87 automated tests, TypeScript and a production build pass; the preview HTTP endpoint responds successfully. Browser automation was blocked by a host sandbox initialization error, so interactive UI, screenshots and real microphone capture were not verified in this stage. See [docs/voice-entry.md](docs/voice-entry.md) for supported phrases, provenance and verification limits.
+
+## Refrigerator map readability update
+
+The existing geometry and flat silver-blue visual direction are retained. Spacious regions show up to two food names with their individual quantities; smaller regions show one. Previews follow the inventory's earliest-date ordering with stable name/ID ties, placing unknown dates last. A `+N` label counts records beyond the visible preview. The total counter caps visually at `99+`, while its accessible label retains the exact count. No quantities are summed and no batches are merged.
+
+At phone widths, previews reduce to one line. Small freezer drawers omit names when the drawing is narrow; baskets omit names and index labels below a 381px viewport to avoid crowding. Exact record counts and attention information remain in accessible button labels, with full inventory available in location details. The mobile **查看所选位置** link moves focus and scrolls to the existing detail panel without moving food or changing selection automatically. Selected regions gain a slightly stronger outline in addition to the pale fill. The `!` marker retains separate text for past dates, upcoming dates and unknown expiration.
+
+91 automated tests, strict TypeScript and production build pass. New tests verify immutable summaries, independent batches/units, inclusive warning boundaries, stable ordering and actual server-rendered React markup for all 13 physical regions, bounded previews and accessible attention labels. Both browser and Windows UI runtimes failed to initialize in this stage; visual layout, touch interaction and focus/scroll behavior have not been verified in a live browser. No personal inventory was written during verification. Cloud sync and deployment remain future work.

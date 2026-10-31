@@ -62,8 +62,13 @@ export function App() {
       {loading ? <div className="loading-state">正在打开冰箱…</div> : loadError || !state ? <section className="load-error" role="alert"><h2>暂时无法读取冰箱</h2><p>浏览器存储不可用或已有数据无法读取。原数据未被覆盖。</p><button className="primary" onClick={() => void load()}>重新读取</button></section> : <>
         {view === 'inventory' ? <InventoryView state={state} today={today} query={query} onQuery={setQuery} busy={saving}
           onLocate={locateItem} onEdit={setForm} onRemove={item => { setError(''); setDeleting(item); }} onAdd={() => setForm('new')} /> : <><section className="workspace" id="workspace" aria-label="冰箱和位置详情">
-          <div className="spatial-panel"><Fridge state={state} selected={selectedId} today={today} onSelect={selectLocation} /></div>
-          <aside className="detail-panel" aria-label="所选位置详情" tabIndex={-1}>
+          <div className="spatial-panel"><Fridge state={state} selected={selectedId} today={today} onSelect={selectLocation} />
+            {location && <a className="map-detail-link" href="#location-details" onClick={event => {
+              event.preventDefault(); const details = document.getElementById('location-details');
+              details?.focus({ preventScroll: true }); details?.scrollIntoView({ block: 'start', behavior: 'auto' });
+            }}><span>{label(location.label)} · {items.length} 条</span><span>查看所选位置 ↓</span></a>}
+          </div>
+          <aside className="detail-panel" id="location-details" aria-label="所选位置详情" tabIndex={-1}>
             {location ? <><div className="location-heading"><div><p className="location-parent">{label(state.locations.find(n => n.id === location.parentId)?.label ?? state.fridge.name)}</p><h2>{label(location.label)}</h2></div><span className="item-count">{items.length} 条</span></div>
               <div className="purpose-row"><div className="purpose-tags">{assigned.map(id => <span key={id}>{label(state.categories.find(c => c.id === id)!.label)}</span>)}</div><button className="text-button" onClick={() => { setError(''); setPurposeDraft(assigned); }}>设置用途</button></div>
               <button className="primary add-button" onClick={() => setForm('new')} disabled={saving}><span aria-hidden="true">＋</span> 添加食物</button>

@@ -53,7 +53,7 @@ h1 { font-size: 35px; font-weight: 600; letter-spacing: -1.8px; line-height: 1.2
 .fridge-visual { width: 100%; max-width: 540px; margin: auto; }
 .drawing-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; color: var(--muted); font-size: 10px; letter-spacing: 1px; padding: 0 5% 4px 8%; }
 .drawing-labels span:last-child { padding-left: 12%; }
-.fridge-drawing { position: relative; width: 100%; }
+.fridge-drawing { position: relative; width: 100%; container-type: inline-size; }
 .fridge-outline { position: absolute; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .fridge-outline rect, .fridge-outline path { fill: none; stroke: var(--ink); vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
 .fridge-outline .cabinet-outline, .fridge-outline .door-outline { stroke-width: 1.65px; }
@@ -71,17 +71,25 @@ h1 { font-size: 35px; font-weight: 600; letter-spacing: -1.8px; line-height: 1.2
 .drawing-region .bin-rim { stroke: #9daab4; stroke-width: .6px; }
 .drawing-region .drawer-handle { stroke-width: 1.5px; }
 .drawing-region:hover .region-surface { fill: #eef2f5; }
-.drawing-region.selected .region-surface { fill: var(--ice); }
+.drawing-region.selected .region-surface { fill: var(--ice); stroke: #405e73; stroke-width: 1.5px; }
 .drawing-region.selected.shelf .shelf-edge { stroke: #405e73; stroke-width: 1.5px; }
 .drawing-region:focus-visible { outline-offset: 3px; border-radius: 2px; z-index: 1; }
 .region-mark { position: absolute; left: 9px; top: 10px; font-size: 10px; line-height: 1; color: #677680; font-variant-numeric: tabular-nums; pointer-events: none; }
 .drawing-region.selected .region-mark { color: #34566d; font-weight: 650; }
-.region-content { position: absolute; left: 9px; right: 10px; top: 30px; overflow: hidden; pointer-events: none; }
-.region-item-name { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; }
-.region-count { position: absolute; right: 9px; top: 9px; font-size: 10px; color: var(--ink); display: flex; align-items: center; gap: 4px; pointer-events: none; }
+.region-content { position: absolute; left: 9px; right: 10px; top: 25px; bottom: 7px; overflow: hidden; pointer-events: none; }
+.region-item-line { display: flex; align-items: baseline; gap: 5px; min-width: 0; line-height: 15px; }
+.region-item-name { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; }
+.region-more { flex-shrink: 0; margin-left: auto; font-size: 9px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.region-more-compact { display: none; }
+.region-count { position: absolute; right: 9px; top: 9px; font-size: 10px; line-height: 1; color: var(--ink); display: flex; align-items: center; gap: 4px; pointer-events: none; }
 .region-count b { width: 12px; height: 12px; display: inline-grid; place-items: center; background: var(--ink); color: white; font-size: 9px; font-weight: 600; border-radius: 50%; }
-.drawing-region.drawer .region-content { top: 25px; }
+.drawing-region.drawer .region-content { top: 21px; bottom: 9px; }
+.drawing-region.drawer .region-item-line { line-height: 12px; }
 .drawing-region.drawer .region-item-name { font-size: 10px; }
+.map-detail-link { display: none; }
+@container (max-width: 420px) {
+  .drawing-region.drawer.short-region .region-content { display: none; }
+}
 .other-locations { display: flex; flex-wrap: wrap; gap: 8px; }
 .other-locations button { background: transparent; border: 1px solid var(--line); padding: 7px 10px; font-size: 12px; }
 .other-locations button[aria-pressed=true] { border-color: var(--ink); background: var(--ice); }
@@ -177,17 +185,34 @@ input[type=radio], input[type=checkbox] { accent-color: #405e73; }
   .fridge-visual { max-width: 540px; margin: auto; }
   .detail-panel { margin-top: 0; padding-top: 20px; }
   .region-mark { font-size: 9px; left: 5px; top: 8px; }
-  .region-content { display: none; }
+  .region-content { left: 5px; right: 5px; top: 21px; bottom: 4px; }
+  .region-item-line { line-height: 12px; }
+  .region-item-line:nth-child(n+2), .region-more-wide { display: none; }
+  .region-item-name { font-size: 10px; }
+  .region-more-compact { display: inline; }
+  .drawing-region.drawer .region-content { top: 20px; bottom: 10px; }
+  .drawing-region.drawer .region-item-name { font-size: 10px; }
   .region-count { right: 5px; top: 7px; font-size: 9px; }
-  .drawing-region.basket .region-mark { top: 14px; }
-  .drawing-region.basket .region-count { top: 14px; }
+  .drawing-region.basket .region-mark { top: 9px; }
+  .drawing-region.basket .region-count { top: 8px; }
+  .drawing-region.basket .region-content { top: 19px; bottom: 2px; }
+  .drawing-region.basket .region-item-line { line-height: 10px; }
+  .drawing-region.basket .region-item-name { font-size: 9px; }
   .drawing-region.basket .region-count b { width: 10px; height: 10px; font-size: 8px; }
   .drawing-labels { font-size: 10px; }
+  .map-detail-link { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-block: 1px solid var(--line); font-size: 11px; color: #405e73; text-decoration: none; }
+  .map-detail-link > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+  .map-detail-link > span:last-child { flex-shrink: 0; }
   .location-heading h2 { font-size: 23px; }
   .purpose-row { margin-bottom: 20px; }
   .expiry { white-space: normal; }
   .item-top { flex-wrap: wrap; gap: 4px 12px; }
   dialog { padding: 23px; }
+}
+@media (max-width: 380px) {
+  .drawing-region.basket .region-content { display: none; }
+  .drawing-region.basket .region-mark { display: none; }
+  .drawing-region.basket .region-count { left: 5px; right: auto; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 .view-switch { display: flex; gap: 24px; margin-top: 24px; border-bottom: 1px solid var(--line); }
