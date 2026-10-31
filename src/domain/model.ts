@@ -32,6 +32,7 @@ export interface InventoryItem {
   locationId: string;
   expiration: Expiration | null;
   quantity?: { value: number; unit: string };
+  entry?: { kind: 'speech' | 'text'; text: string; recordedOn: DateOnly };
 }
 export interface InventoryState {
   schemaVersion: 1;

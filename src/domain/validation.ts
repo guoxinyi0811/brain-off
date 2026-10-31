@@ -49,6 +49,10 @@ export function validateState(value: unknown): asserts value is InventoryState {
   for (const item of state.items) {
     ensure(text(item.name) && nodes.get(item.locationId)?.canHoldItems, 'Invalid item or storage location');
     if (item.quantity !== undefined) validateQuantity(item.quantity);
+    if (item.entry !== undefined) {
+      ensure(record(item.entry) && ['speech', 'text'].includes(item.entry.kind) && text(item.entry.text) && item.entry.text.length <= 500, 'Invalid entry source');
+      calendarDay(item.entry.recordedOn);
+    }
     const expiry = item.expiration;
     if (expiry === null) continue;
     ensure(record(expiry) && text(expiry.originalInput) && text(expiry.recordedOn), 'Invalid expiration');

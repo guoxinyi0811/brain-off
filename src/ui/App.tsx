@@ -85,7 +85,7 @@ export function App() {
       setLocatedId(null); setQuery({ ...emptyInventoryQuery }); setError('');
     }} />}
     {form && state && <ItemForm state={state} locationId={view === 'inventory' && query.locationId ? query.locationId : selectedId} item={form === 'new' ? undefined : form} busy={saving} onClose={() => setForm(null)} onSave={async item => {
-      await commit(s => form === 'new' ? addItem(s, item) : updateItem(s, item.id, { name: item.name, locationId: item.locationId, expiration: item.expiration, quantity: item.quantity }), '已保存');
+      await commit(s => form === 'new' ? addItem(s, item) : updateItem(s, item.id, { name: item.name, locationId: item.locationId, expiration: item.expiration, quantity: item.quantity, entry: item.entry }), '已保存');
       setSelected(item.locationId);
     }} />}
     {purposes && state && <Modal title="储存用途" busy={saving} onClose={() => setPurposeDraft(null)}><p className="modal-copy">可多选，不影响已有食物。</p><fieldset className="category-grid" disabled={saving}><legend className="sr-only">储存用途</legend>{state.categories.map(category => <label key={category.id}><input type="checkbox" checked={purposes.includes(category.id)} onChange={e => setPurposeDraft(e.target.checked ? [...purposes, category.id] : purposes.filter(id => id !== category.id))} />{label(category.label)}</label>)}</fieldset>{error && <p className="error" role="alert">{error}</p>}<div className="modal-actions"><button className="secondary" disabled={saving} onClick={() => setPurposeDraft(null)}>取消</button><button className="primary" disabled={saving} onClick={() => void saveAction(s => setPurposes(s, selectedId, purposes), '用途已更新', () => setPurposeDraft(null))}>{saving ? '保存中…' : '保存'}</button></div></Modal>}

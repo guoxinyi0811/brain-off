@@ -85,7 +85,7 @@ Dates are organizational reminders, not food-safety assessments. Placement sugge
 
 ## Verification
 
-71 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
+87 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting and physical location ordering.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
@@ -112,7 +112,7 @@ There is no universal rule for broad groceries, milk, produce or condiments in t
 
 Validation accepts the extended expiration variants and legacy schema-version-1 snapshots. It rejects partial production inputs, invalid/future start dates, negative/fractional durations and inconsistent derived dates. Both empty manual fields fall back to automatic estimation; one populated production field requires the other.
 
-Confirmed future requirement: voice input should produce an editable structured draft (food name, location, expiration input and its origin), then allow the user to check/correct it before saving into the fridge. Speech recognition, microphone access and automatic placement are not implemented in this update. Recognition must not silently invent a production date or overwrite existing stock. Whether saving needs explicit confirmation versus an editable undo flow remains a future UX decision.
+Confirmed requirement: voice input should produce an editable structured draft (food name, location, expiration input and its origin), then allow the user to check/correct it before saving into the fridge. The editable voice-assisted draft flow is now implemented; see [voice-entry.md](docs/voice-entry.md). Recognition never saves inventory automatically. Recognition must not silently invent a production date or overwrite existing stock. The first implementation requires a reviewed form save.
 
 Validation for this update: 32 automated tests, TypeScript and the production build passed. Browser checks covered production-date-plus-duration preview, an automatic estimate using a past purchase date, persistence after reload, unchanged expiration after renaming/moving, unknown-date filtering and manual override to remaining weeks. Test-only browser records were removed afterward.
 
@@ -126,7 +126,7 @@ Placement suggestions use conservative name aliases (including full-width/case n
 
 Suggestions show the full location path and matched purpose. The person explicitly chooses a suggestion or keeps/changes the ordinary location selector. Typing or changing a name never silently moves an item. Multiple matches follow physical order. Renaming locations preserves stable IDs; changing purposes changes future suggestions without moving inventory. These are organizational matches to the owner's settings, not food-safety recommendations or capacity checks.
 
-Validation for this update: 41 automated tests, TypeScript and the production build passed. Browser checks covered entering packages, applying a recommendation with mouse and keyboard, overriding the suggested location, reload persistence, editing/clearing quantities while preserving expiration, rejecting zero, fractional weights and narrow-screen layout. Test-only records were removed afterward. Voice recognition and cross-device synchronization remain future work.
+Validation for this update: 41 automated tests, TypeScript and the production build passed. Browser checks covered entering packages, applying a recommendation with mouse and keyboard, overriding the suggested location, reload persistence, editing/clearing quantities while preserving expiration, rejecting zero, fractional weights and narrow-screen layout. Test-only records were removed afterward. Cross-device synchronization remains future work; voice-assisted entry is described below.
 
 ## Backup and recovery
 
@@ -142,7 +142,7 @@ Files are limited to 5 MiB and 10,000 inventory records, 1,000 locations, 200 ca
 
 Verification for this update: 55 automated tests, strict TypeScript and production build passed. Tests cover full round trips, legacy/BOM input, limits, invalid snapshots, exact-byte recovery, checkpoint-before-primary ordering, checkpoint/primary/read failures, corrupt originals and observed concurrent changes. Browser QA verified an actual downloaded file by reading it back, rejected malformed JSON, previewed before replacement, restored quantities and original dates, reloaded, restored the previous checkpoint, and checked the 319px layout without horizontal overflow. The original fridge and a clean recovery point were restored after QA. Browser storage-permission/quota failures are tested at the repository boundary, not simulated in a real browser.
 
-Cloud synchronization, voice recognition and deployment remain unimplemented. Backup files support manual transfer; they do not provide automatic device synchronization.
+Cloud synchronization and deployment remain unimplemented. Backup files support manual transfer; they do not provide automatic device synchronization.
 
 
 ## Storage optimization update
@@ -150,3 +150,12 @@ Cloud synchronization, voice recognition and deployment remain unimplemented. Ba
 IndexedDB is now the default local persistence engine. Revision-checked transactions prevent upgraded pages from silently overwriting one another and commit inventory plus the recovery point together. Old LocalStorage data is migrated once and retained unchanged. A compact external-update notice offers explicit reload, while open editors keep their input. The backup JSON format and domain model remain unchanged.
 
 71 automated tests, TypeScript and the production build pass. Two real same-origin browser pages verified stale-write rejection, retained drafts, reload/retry, reverse notifications, unchanged expiration/quantity and migration of the old recovery point. Test data was removed. Browser screenshots were unavailable during this stage. See [storage-design.md](docs/storage-design.md) for implementation, migration, verification and limits.
+
+
+## Voice-assisted entry update
+
+New-item forms include an optional **语音 / 一句话录入** disclosure. A typed sentence or browser speech result can fill an editable draft with a name, optional quantity, location and expiration inputs. Example: 三盒牛奶，还有七天，放冷藏第二层. Nothing is saved until **保存食物** is chosen. Ambiguous dates/locations require correction or explicit review. The original applied sentence is preserved as optional entry provenance and remains in backups.
+
+Recognition uses the native/prefixed browser SpeechRecognition service only after an explicit click, with a typed fallback. Some browsers process audio online; the UI explains this before starting. Closing/collapsing cancels capture. No audio is stored and no app speech backend or LLM is added. Browser/device compatibility and live microphone behavior are not yet verified.
+
+87 automated tests, TypeScript and a production build pass; the preview HTTP endpoint responds successfully. Browser automation was blocked by a host sandbox initialization error, so interactive UI, screenshots and real microphone capture were not verified in this stage. See [docs/voice-entry.md](docs/voice-entry.md) for supported phrases, provenance and verification limits.
