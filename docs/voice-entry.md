@@ -12,15 +12,19 @@ Implemented for new food records, alongside the existing manual form. No cloud a
 Examples:
 
 - `三盒牛奶，还有七天，放冷藏第二层`
+- `三盒牛奶还有七天放冷藏第二层`
 - `牛奶三盒，2026年10月1日生产，保质期一个月`
+- `三盒牛奶生产日期是2026年10月19日保质期七天放冷藏第二层`
 - `半公斤牛肉`
 - `鸡蛋，保质期不知道`
 
-The parser handles one food at a time. Commas separate shelf life, production date and location clauses. Quantity prefixes/suffixes accept Arabic/full-width digits, explicit Chinese numbers, decimal weights and common units. It does not change names such as 三文鱼 or 四季豆 into numbers. Ambiguous shorthand such as 一百二, multiple foods, conflicting quantities or unrelated leftover clauses are rejected. This is a deliberately limited rule parser, not general natural-language understanding; the ordinary form remains available.
+The parser handles one food at a time. Explicit phrases such as 还有、预计还剩、保质期、生产日期是、放在 and 存到 separate continuous speech without requiring recognized commas. Complete date-before-生产 and 生产日期-before-date phrases keep the date together; supported field clauses can change order. Commas remain useful for complex wording. A location-first sentence that runs directly into an unmarked food name is not supported; separate those clauses with a comma.
+
+Quantity prefixes/suffixes accept Arabic/full-width digits, explicit Chinese numbers, decimal weights and common units. It does not change names such as 三文鱼 or 四季豆 into numbers. Ambiguous shorthand such as 一百二, multiple foods, conflicting quantities or unrelated leftover clauses are rejected. This is a deliberately limited rule parser, not general natural-language understanding; the ordinary form remains available. Original applied text is preserved exactly apart from outer whitespace, including whether commas were recognized.
 
 ## Dates and locations
 
-Remaining time uses whole days/weeks from the draft's local recording day. A production date requires an explicit four-digit year and a valid calendar date; the duration can use days/weeks/months. A missing year is never inferred. Invalid/future production dates, ranges, fractional days, repeated durations and conflicting expiration sources produce a review flag. Saving is blocked until the person corrects or explicitly confirms the expiration fields, or deliberately selects automatic estimation.
+Remaining time uses whole days/weeks from the draft's local recording day. A production date requires an explicit four-digit year and a valid calendar date; the duration can use days/weeks/months. A missing year is never inferred. Invalid/future production dates, missing time values, ranges, fractional days, repeated durations and conflicting expiration sources produce a review flag. Common uncertainty phrases such as 可能是、大约 and 好像是 never become a confirmed production date. Production matching must consume a single complete date phrase; date alternatives or extra unexplained text are rejected or remain pending rather than silently taking the first date. A rejected sentence leaves the existing form unchanged. Saving is blocked until the person corrects or explicitly confirms the expiration fields, or deliberately selects automatic estimation.
 
 No expiration input leaves automatic mode selected, using the existing reviewed category rules where applicable. Unsupported categories remain pending. No quantity is invented when none was provided.
 
@@ -40,6 +44,6 @@ The source text is validated (nonempty, at most 500 characters, valid recording 
 
 ## Verification and limits
 
-87 automated tests, strict TypeScript and the production build pass. New tests cover Chinese/full-width/decimal parsing, exact manufacturing dates, ambiguous/missing values, one-food rejection, physical-location matching, source validation/backup preservation, native/prefixed detection, permission/network errors, final-result deduplication, disposal/late callbacks, capture timeouts and synchronous service failures. Speech tests use a fake recognizer and controlled timers; they do not record microphone audio.
+95 automated tests, strict TypeScript and the production build pass. Tests cover punctuation-free speech, reordered explicit clauses, complete manufacturing dates in Arabic/Chinese digits, uncertain/multiple/missing dates, incomplete remaining time and unknown locations. They also cover Chinese/full-width/decimal quantities, one-food rejection, physical-location matching, source validation/backup preservation, native/prefixed detection, permission/network errors, final-result deduplication, disposal/late callbacks, capture timeouts and synchronous service failures. The punctuation and date-alternative regressions were reproduced against the prior parser before the fix. Speech-service tests use a fake recognizer and controlled timers; they do not record microphone audio.
 
 The local Vite endpoint returned HTTP 200. Interactive browser, screenshot and real microphone verification could not run because the host's browser automation kernel failed to initialize (`windows sandbox ... setup refresh had errors`). No microphone permission was granted during development. Device/browser recognition quality and the new page interactions still need a real-browser check; no successful live speech recognition is claimed.

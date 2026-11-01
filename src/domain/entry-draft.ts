@@ -38,6 +38,22 @@ export function spokenNumber(text: string): number {
   return value;
 }
 const number = '[0-9零〇一二两三四五六七八九十百千点半]+(?:\\.[0-9]+)?';
+const fullDate = `${number}\\s*[年/-]\\s*${number}\\s*[月/-]\\s*${number}\\s*日?`;
+const partialDate = `${number}\\s*月\\s*${number}\\s*日?`;
+const productionPrefix = '生产(?:日期)?(?:是|为|于)?';
+const uncertainDate = '(?:可能(?:是)?|也许|大概|大约|约|不确定|好像(?:是)?|或许|差不多(?:是)?|估计(?:是)?)';
+const productionClause = `(?:(?:${uncertainDate}\\s*)?(?:${fullDate}|${partialDate})\\s*生产(?:的)?|${productionPrefix}\\s*(?:${uncertainDate}\\s*)?(?:${fullDate}|${partialDate}))`;
+const unknownClause = '(?:保质期(?:不清楚|不知道|未知|不确定)|(?:没有|不知道|不清楚)保质期)';
+const remainingPrefix = '(?:保质期)?(?:预计)?(?:剩余|还剩|还有|还能放|可放|能放)';
+const locationPrefix = '(?:放到|放在?|存到|位置(?:是|为)?)';
+
+/** Split only explicit field phrases; complete production phrases keep their date together. */
+function spokenClauses(text: string): string[] {
+  const boundary = new RegExp(`(${productionClause})|${unknownClause}|${remainingPrefix}|保质期(?:为|是)?|${locationPrefix}|生产日期(?:是|为)?|生产于`, 'g');
+  return text.split(/[，,。；;\n]+/).flatMap(clause => clause
+    .replace(boundary, (match: string, production: string | undefined) => production ? `,${match},` : `,${match}`)
+    .split(',').map(value => value.trim()).filter(Boolean));
+}
 function duration(text: string): { duration: string; unit: ShelfLife['unit'] } | null {
   const match = text.trim().match(new RegExp(`^(${number})\\s*(天|日|周|星期|个月|月)$`));
   if (!match) return null;
@@ -66,22 +82,23 @@ export function parseEntryDraft(raw: string, kind: 'speech' | 'text', state: Inv
   const result: EntryDraft = { name: '', quantity: undefined, locationId: currentLocation, mode: 'automatic', date: '', duration: '', unit: 'days',
     reviewExpiration: false, reviewLocation: false, issues: [], entry: { kind, text: raw.trim(), recordedOn: today } };
   const foods: string[] = []; const remains: string[] = []; const shelfLives: string[] = []; const productions: string[] = []; const locations: string[] = [];
-  for (let clause of text.split(/[，,。；;\n]+/).map(s => s.trim()).filter(Boolean)) {
-    if (/^(?:保质期(?:不清楚|不知道|未知|不确定)|(?:没有|不知道|不清楚)保质期)$/.test(clause)) continue;
-    if (/^(?:放在?|放到|存到|位置(?:是|为)?)/.test(clause)) {
-      locations.push(clause.replace(/^(?:放到|放在?|存到|位置(?:是|为)?)/, '')); continue;
+  for (const clause of spokenClauses(text)) {
+    if (new RegExp(`^${unknownClause}$`).test(clause)) continue;
+    if (new RegExp(`^${locationPrefix}`).test(clause)) {
+      locations.push(clause.replace(new RegExp(`^${locationPrefix}`), '')); continue;
     }
     if (/生产/.test(clause)) { productions.push(clause); continue; }
-    if (/^保质期(?!还有|还剩|剩余)/.test(clause)) { shelfLives.push(clause.replace(/^保质期(?:为|是)?/, '')); continue; }
-    const remaining = clause.match(/(?:保质期)?(?:预计)?(?:剩余|还剩|还有|还能放|可放|能放)(.+)$/);
+    const remaining = clause.match(new RegExp(`^${remainingPrefix}(.*)$`));
     if (remaining) {
-      remains.push(remaining[1]!); clause = clause.slice(0, remaining.index).trim();
-      if (!clause) continue;
+      remains.push(remaining[1]!); continue;
     }
+    if (/^保质期/.test(clause)) { shelfLives.push(clause.replace(/^保质期(?:为|是)?/, '')); continue; }
     foods.push(clause.replace(/^(?:我买了|买了|添加)\s*/, ''));
   }
-  if (foods.length !== 1 || /[、和]|以及/.test(foods[0]!)) throw new Error('目前一次录入一种食物，请用逗号分隔保质期和位置。');
+  if (foods.length !== 1 || /[、和]|以及/.test(foods[0]!)) throw new Error('目前一次录入一种食物；复杂表达请用逗号分隔食物、保质期和位置。');
   const food = foods[0]!;
+  if (productions.length && (new RegExp(fullDate).test(food) || new RegExp(`${uncertainDate}$|(?:或者?|到|至)$`).test(food)))
+    throw new Error('日期或食物不明确，请用逗号分隔并填写唯一的完整生产日期。');
   const units = '千克|公斤|毫升|升|kg|ml|g|l|个|盒|瓶|袋|份|罐|包|斤';
   if (new RegExp(`(?:${number})\\s*(?:到|至|[-~～—])\\s*(?:${number})\\s*(?:${units})|[-负]\\s*(?:${number})\\s*(?:${units})`, 'i').test(food))
     throw new Error('数量有范围或符号歧义，请填写明确的正数。');
@@ -98,7 +115,8 @@ export function parseEntryDraft(raw: string, kind: 'speech' | 'text', state: Inv
   if (!result.name || result.name.length > 100) throw new Error('请明确食物名称，最多 100 个字符。');
   if (productions.length || shelfLives.length) {
     result.mode = 'production';
-    const match = productions.length === 1 ? productions[0]!.match(new RegExp(`(${number})[年/-](${number})[月/-](${number})日?`)) : null;
+    const production = productions.length === 1 ? productions[0]!.match(new RegExp(`^(?:(${fullDate})\\s*生产(?:的)?|${productionPrefix}\\s*(${fullDate}))$`)) : null;
+    const match = production ? (production[1] ?? production[2])!.match(new RegExp(`^(${number})\\s*[年/-]\\s*(${number})\\s*[月/-]\\s*(${number})\\s*日?$`)) : null;
     if (match) {
       try {
         const year = spokenNumber(match[1]!), month = spokenNumber(match[2]!), day = spokenNumber(match[3]!);

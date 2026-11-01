@@ -21,6 +21,59 @@ test('one sentence maps quantity, remaining time and explicit physical location 
   assert.equal(draft.reviewExpiration, false); assert.equal(draft.reviewLocation, false);
   assert.equal(draft.entry.text, '三盒牛奶，还有七天，放冷藏第二层'); assert.equal(draft.entry.recordedOn, today);
 });
+
+test('continuous speech separates quantity, time and placement without relying on recognized punctuation', () => {
+  for (const text of ['三盒牛奶还有七天放冷藏第二层', '三盒牛奶放在冷藏第二层还有七天', '我买了三盒牛奶 预计还剩七天 存到冷藏第二层', '三盒牛奶保质期预计还有七天放冷藏第二层', '三盒牛奶保质期还能放七天放冷藏第二层', '牛奶３盒还有１周放到冷藏第二层']) {
+    const draft = parse(text);
+    assert.equal(draft.name, '牛奶'); assert.deepEqual(draft.quantity, { value: 3, unit: '盒' });
+    assert.equal(draft.locationId, 'lower-shelf'); assert.equal(draft.mode, 'estimate');
+    assert.equal(draft.duration, text.includes('１周') ? '1' : '7');
+    assert.equal(draft.reviewExpiration, false); assert.equal(draft.reviewLocation, false);
+    assert.equal(draft.entry.text, text);
+  }
+});
+
+test('continuous production-date speech recognizes explicit complete dates and shelf life in either clause order', () => {
+  for (const text of ['三盒牛奶2026年10月19日生产保质期七天放冷藏第二层', '三盒牛奶生产日期是2026-10-19保质期七天放冷藏第二层', '三盒牛奶保质期七天2026年10月19日生产放冷藏第二层', '2026年10月19日生产的三盒牛奶保质期七天放冷藏第二层', '三盒牛奶二零二六年十月十九日生产保质期七天放冷藏第二层']) {
+    const draft = parse(text);
+    assert.equal(draft.name, '牛奶'); assert.equal(draft.date, '2026-10-19');
+    assert.equal(draft.duration, '7'); assert.equal(draft.mode, 'production');
+    assert.equal(draft.locationId, 'lower-shelf'); assert.equal(draft.reviewExpiration, false);
+  }
+});
+
+test('continuous missing or uncertain dates and locations require correction rather than gaining guessed values', () => {
+  const missingYear = parse('三盒牛奶十月十九日生产保质期七天放冷藏第二层');
+  assert.equal(missingYear.name, '牛奶'); assert.equal(missingYear.date, ''); assert.equal(missingYear.reviewExpiration, true);
+  const range = parse('牛奶还有三到五天放冷藏第二层');
+  assert.equal(range.duration, ''); assert.equal(range.reviewExpiration, true); assert.equal(range.locationId, 'lower-shelf');
+  const missingLocation = parse('牛奶还有七天放冷藏第九层');
+  assert.equal(missingLocation.duration, '7'); assert.equal(missingLocation.reviewLocation, true);
+  const conflicting = parse('牛奶还有七天还有三天放冷藏第二层放冷藏第三层');
+  assert.equal(conflicting.reviewExpiration, true); assert.equal(conflicting.reviewLocation, true);
+  assert.equal(conflicting.locationId, 'upper-shelf'); assert.equal(conflicting.duration, '');
+  const incomplete = parse('牛奶还有放冷藏第二层');
+  assert.equal(incomplete.duration, ''); assert.equal(incomplete.reviewExpiration, true);
+  const unknown = parse('三盒牛奶保质期不知道放冷藏第二层');
+  assert.equal(unknown.name, '牛奶'); assert.equal(unknown.mode, 'automatic'); assert.equal(unknown.locationId, 'lower-shelf');
+  for (const text of ['三盒牛奶可能是2026年10月19日生产保质期七天', '三盒牛奶大约2026年10月19日生产保质期七天', '三盒牛奶生产日期好像是2026-10-19保质期七天']) {
+    const uncertain = parse(text);
+    assert.equal(uncertain.name, '牛奶'); assert.equal(uncertain.date, ''); assert.equal(uncertain.reviewExpiration, true);
+  }
+});
+
+test('production date alternatives and extra date text cannot silently select the first date', () => {
+  for (const text of ['牛奶，2026-10-01或2026-10-02生产，保质期七天', '牛奶，生产日期2026-10-01到2026-10-02，保质期七天', '牛奶，可能是2026-10-01生产，保质期七天']) {
+    try {
+      const draft = parse(text);
+      assert.equal(draft.reviewExpiration, true);
+      assert.equal(draft.date, '');
+    } catch (error) {
+      if (error instanceof assert.AssertionError) throw error;
+      assert.ok(error instanceof Error);
+    }
+  }
+});
 test('suffix quantities, fractional weights and full-width digits are supported without altering food names', () => {
   assert.deepEqual(parse('牛奶３盒，还有１周').quantity, { value: 3, unit: '盒' });
   assert.deepEqual(parse('半公斤牛肉').quantity, { value: .5, unit: '公斤' });
@@ -40,7 +93,7 @@ test('missing, invalid or future production dates require review and never guess
   }
 });
 test('ranges, duplicate times, fractional days and conflicting sources require explicit review', () => {
-  for (const text of ['牛奶，还有三到五天', '牛奶，还有两三天', '牛奶，还有三天，还有七天', '牛奶，还有半天', '牛奶，还有一个月', '牛奶，2026-10-01生产，保质期七天，还有三天'])
+  for (const text of ['牛奶，还有三到五天', '牛奶，还有两三天', '牛奶，还有三天，还有七天', '牛奶，还有半天', '牛奶，还有一个月', '牛奶，2026-10-01生产，保质期七天，还有三天', '牛奶2026-10-01生产2026-10-02生产保质期七天'])
     assert.equal(parse(text).reviewExpiration, true);
   assert.equal(parse('牛奶，还有零天').duration, '0');
 });
@@ -63,7 +116,7 @@ test('multi-food or malformed input is rejected rather than silently saving a pa
 });
 test('parsing never mutates stock or purposes, and draft provenance survives edits and backup round trips', () => {
   const state = createSampleFridge(); const original = structuredClone(state);
-  const draft = parseEntryDraft('三盒牛奶，还有七天', 'text', state, 'upper-shelf', today); assert.deepEqual(state, original);
+  const draft = parseEntryDraft('三盒牛奶还有七天放冷藏第二层', 'text', state, 'upper-shelf', today); assert.deepEqual(state, original);
   const expiration = resolveExpirationInput({ ...draft, changed: true, today });
   const saved = addItem(state, { id: 'draft-food', name: draft.name, locationId: draft.locationId, expiration, quantity: draft.quantity, entry: draft.entry });
   const edited = updateItem(saved, 'draft-food', { quantity: { value: 2, unit: '盒' } });

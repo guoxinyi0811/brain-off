@@ -26,7 +26,7 @@ export function QuickEntry({ state, locationId, busy, onDraft, onListening }: Pr
     catch (cause) { setError(cause instanceof Error ? cause.message : '无法整理这句话，请修改文字。'); }
   }
   return <details className="quick-entry" onToggle={event => { if (!event.currentTarget.open && status !== 'idle') { capture.current?.dispose(); setStatus('idle'); onListening(false); } }}><summary>语音 / 一句话录入</summary><div>
-    <label>录入原句<textarea maxLength={500} value={text} disabled={busy || status !== 'idle'} onChange={event => { setText(event.target.value); setKind('text'); }} placeholder="三盒牛奶，还有七天，放冷藏第二层" /></label>
+    <label>录入原句<textarea maxLength={500} value={text} disabled={busy || status !== 'idle'} onChange={event => { setText(event.target.value); setKind('text'); }} placeholder="三盒牛奶还有七天放冷藏第二层" /></label>
     <div className="quick-entry-actions"><button type="button" className="secondary" disabled={busy || !supported || status === 'stopping'} onClick={() => status === 'idle' ? start() : capture.current?.stop()}>{status === 'listening' ? '结束语音' : status === 'stopping' ? '正在结束…' : '开始语音'}</button>
       <button type="button" className="secondary" disabled={busy || status !== 'idle' || !text.trim()} onClick={apply}>填入表单</button></div>
     <p className="field-hint">{supported ? '语音可能由浏览器的在线服务处理；点击后请求麦克风权限。' : '当前浏览器不支持语音，可直接输入原句。'} 一次一种食物。</p>

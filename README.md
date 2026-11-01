@@ -85,7 +85,7 @@ Dates are organizational reminders, not food-safety assessments. Placement sugge
 
 ## Verification
 
-91 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting, physical location ordering and bounded refrigerator-map previews.
+95 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting, physical location ordering, bounded refrigerator-map previews and punctuation-free entry parsing.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
@@ -154,7 +154,7 @@ IndexedDB is now the default local persistence engine. Revision-checked transact
 
 ## Voice-assisted entry update
 
-New-item forms include an optional **语音 / 一句话录入** disclosure. A typed sentence or browser speech result can fill an editable draft with a name, optional quantity, location and expiration inputs. Example: 三盒牛奶，还有七天，放冷藏第二层. Nothing is saved until **保存食物** is chosen. Ambiguous dates/locations require correction or explicit review. The original applied sentence is preserved as optional entry provenance and remains in backups.
+New-item forms include an optional **语音 / 一句话录入** disclosure. A typed sentence or browser speech result can fill an editable draft with a name, optional quantity, location and expiration inputs. Example: 三盒牛奶还有七天放冷藏第二层. Explicit field phrases separate continuous speech without requiring commas; existing punctuated input remains supported. Nothing is saved until **保存食物** is chosen. Ambiguous dates/locations require correction or explicit review. The original applied sentence is preserved as optional entry provenance and remains in backups.
 
 Recognition uses the native/prefixed browser SpeechRecognition service only after an explicit click, with a typed fallback. Some browsers process audio online; the UI explains this before starting. Closing/collapsing cancels capture. No audio is stored and no app speech backend or LLM is added. Browser/device compatibility and live microphone behavior are not yet verified.
 
@@ -167,3 +167,9 @@ The existing geometry and flat silver-blue visual direction are retained. Spacio
 At phone widths, previews reduce to one line. Small freezer drawers omit names when the drawing is narrow; baskets omit names and index labels below a 381px viewport to avoid crowding. Exact record counts and attention information remain in accessible button labels, with full inventory available in location details. The mobile **查看所选位置** link moves focus and scrolls to the existing detail panel without moving food or changing selection automatically. Selected regions gain a slightly stronger outline in addition to the pale fill. The `!` marker retains separate text for past dates, upcoming dates and unknown expiration.
 
 91 automated tests, strict TypeScript and production build pass. New tests verify immutable summaries, independent batches/units, inclusive warning boundaries, stable ordering and actual server-rendered React markup for all 13 physical regions, bounded previews and accessible attention labels. Both browser and Windows UI runtimes failed to initialize in this stage; visual layout, touch interaction and focus/scroll behavior have not been verified in a live browser. No personal inventory was written during verification. Cloud sync and deployment remain future work.
+
+## Continuous entry parsing update
+
+Continuous speech such as `三盒牛奶还有七天放冷藏第二层` and `三盒牛奶生产日期是2026年10月19日保质期七天放冷藏第二层` now fills the same editable draft as punctuated input. Remaining-time and placement clauses may change order; a complete production phrase can appear before or after the food. The grammar still handles one food at a time, requires explicit field markers, never invents a production year and does not save automatically.
+
+Production date parsing no longer silently accepts the first date from an alternative or unexplained phrase. Missing or uncertain dates stay pending; unparseable alternatives require editing the sentence. Date/quantity provenance, backup format, storage and microphone lifecycle are unchanged. 95 automated tests, strict TypeScript and production build pass. The host browser runtime still fails during sandbox initialization, so no new live microphone or interactive browser verification is claimed. See [voice-entry.md](docs/voice-entry.md) for examples and supported boundaries.
