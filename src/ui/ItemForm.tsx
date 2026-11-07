@@ -38,7 +38,7 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
       foodType, basisDate, refrigerated: isRefrigerated(state, location) };
   }
   let preview: string;
-  try { preview = expiryLabel(resolveExpirationInput(input()), localToday()).detail; }
+  try { preview = !location && automatic ? '选择位置后显示到期日' : expiryLabel(resolveExpirationInput(input()), localToday()).detail; }
   catch { preview = '填写完整后显示到期日'; }
   function changeMode(next: ExpirationInput['mode']) {
     setMode(next); setExpiryChanged(true); setReviewExpiry(false); setDuration(''); setDate(''); setUnit('days');
@@ -60,6 +60,7 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
     event.preventDefault(); setError('');
     try {
       if (!name.trim()) throw new Error('请填写食物名称。');
+      if (!state.locations.some(node => node.id === location && node.canHoldItems)) throw new Error('请选择储存位置。');
       if (listening) throw new Error('请先结束语音，再检查并保存。');
       if (reviewLocation) throw new Error('请先确认所选位置。');
       if (reviewExpiry) throw new Error('请先补填或确认保质期。');
@@ -80,7 +81,7 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
         <label>单位<input type="text" maxLength={16} value={quantityUnit} onChange={e => setQuantityUnit(e.target.value)} placeholder="盒、瓶、g…" list="quantity-units" /></label>
         <datalist id="quantity-units">{['个', '盒', '瓶', '袋', '份', 'g', 'kg', 'ml', 'L'].map(value => <option key={value} value={value} />)}</datalist>
       </div>
-      <label>位置<select value={location} onChange={e => { setLocation(e.target.value); setReviewLocation(false); }}>{storageLocations(state).map(node => <option key={node.id} value={node.id}>{locationName(state, node.id)}</option>)}</select></label>
+      <label>位置<select required value={location} onChange={e => { setLocation(e.target.value); setReviewLocation(false); }}><option value="">选择位置</option>{storageLocations(state).map(node => <option key={node.id} value={node.id}>{locationName(state, node.id)}</option>)}</select></label>
       {reviewLocation && <p className="field-hint">位置不明确。<button type="button" className="text-button" onClick={() => setReviewLocation(false)}>确认所选位置</button></p>}
       {suggestions.length > 0 && <div className="placement-suggestions" aria-label="存放位置建议"><p className="field-hint">按已设置用途推荐</p>{suggestions.map(suggestion => <button type="button" className="placement-choice" key={suggestion.locationId}
         aria-label={`采用推荐位置：${locationName(state, suggestion.locationId)}`} aria-pressed={location === suggestion.locationId}
@@ -96,7 +97,7 @@ export function ItemForm({ state, locationId, item, busy, onClose, onSave }: Pro
       {automatic && <div className="automatic-fields">
         <label>食物种类<select value={foodType} onChange={e => { setFoodType(e.target.value); setTypeChosen(true); setExpiryChanged(true); }}><option value="">其他 / 尚不确定</option>{foodTypes.map(type => <option key={type.id} value={type.id}>{type.label}</option>)}</select></label>
         {foodType && <label>购入 / 做好日期<input type="date" required max={localToday()} value={basisDate} onInput={e => { setBasisDate(e.currentTarget.value); setExpiryChanged(true); }} onChange={e => { setBasisDate(e.target.value); setExpiryChanged(true); }} /></label>}
-        <p className="field-hint">{!isRefrigerated(state, location) ? '冷冻暂不自动估算，可手动填写。' : '按持续冷藏 ≤4°C 的参考时长估算；包装和实际储存情况优先。'} <a href={estimateSource} target="_blank" rel="noreferrer">依据 ↗</a></p>
+        <p className="field-hint">{!location ? '选择位置后显示参考估算。' : !isRefrigerated(state, location) ? '冷冻暂不自动估算，可手动填写。' : '按持续冷藏 ≤4°C 的参考时长估算；包装和实际储存情况优先。'} <a href={estimateSource} target="_blank" rel="noreferrer">依据 ↗</a></p>
       </div>}
       <p className="field-hint" role="status">{preview}</p>{reviewExpiry && <p className="field-hint">保质期需要确认。<button type="button" className="text-button" onClick={confirmExpiry}>确认表单中的保质期</button></p>}
       {item && !expiryChanged && <p className="field-hint">{expiry ? `${expiry.originalInput} · 记录于 ${expiry.recordedOn}` : '尚无足够信息估算'} · 保留原记录</p>}

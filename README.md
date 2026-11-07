@@ -1,6 +1,6 @@
 # brain off
 
-A spatial refrigerator inventory app. Select a real storage location, inspect its food, and add, edit, move or remove items with exact or estimated expiration dates.
+A spatial refrigerator inventory app. Find food or start adding it directly from home, and use the physical refrigerator map to inspect, edit, move or remove items with exact or estimated expiration dates.
 
 Repository: https://github.com/guoxinyi0811/brain-off
 
@@ -85,7 +85,7 @@ Dates are organizational reminders, not food-safety assessments. Placement sugge
 
 ## Verification
 
-95 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting, physical location ordering, bounded refrigerator-map previews and punctuation-free entry parsing.
+97 automated tests pass, along with strict TypeScript checking and the Vite production build. Tests cover configuration/geometry, inventory-preserving upgrades, expiration provenance, search normalization, combined filters, inclusive date boundaries, stable sorting, physical location ordering, bounded refrigerator-map previews, punctuation-free entry parsing and location-independent home entry controls.
 
 Browser checks covered the desktop two-column layout and narrow-screen layout without horizontal overflow, selecting the tall door basket, adding an estimate, reload persistence, moving the item into freezer drawer 3 and confirmed removal. Permission/quota failure behavior is covered at the repository boundary; browser permission/quota failure UI has not been exercised in a real browser.
 
@@ -173,3 +173,11 @@ At phone widths, previews reduce to one line. Small freezer drawers omit names w
 Continuous speech such as `三盒牛奶还有七天放冷藏第二层` and `三盒牛奶生产日期是2026年10月19日保质期七天放冷藏第二层` now fills the same editable draft as punctuated input. Remaining-time and placement clauses may change order; a complete production phrase can appear before or after the food. The grammar still handles one food at a time, requires explicit field markers, never invents a production year and does not save automatically.
 
 Production date parsing no longer silently accepts the first date from an alternative or unexplained phrase. Missing or uncertain dates stay pending; unparseable alternatives require editing the sentence. Date/quantity provenance, backup format, storage and microphone lifecycle are unchanged. 95 automated tests, strict TypeScript and production build pass. The host browser runtime still fails during sandbox initialization, so no new live microphone or interactive browser verification is claimed. See [voice-entry.md](docs/voice-entry.md) for examples and supported boundaries.
+
+## Home search and entry update
+
+The refrigerator home now includes **查找** and **添加食物** beside a compact search field. Submit a search with Enter or **查找** to open Inventory with the same term and clear previous location/status/sort filters, so the search covers the entire fridge. The inventory search field receives focus. Ordinary view switching retains filters as before; the wordmark returns to the refrigerator home. Result-to-fridge positioning reuses the existing behavior.
+
+Home-level adding starts with **选择位置** instead of silently assuming the currently highlighted shelf. Enter the food first, choose a purpose-based recommendation or a location, then save. A valid storage location is required by both the select control and submit handler. Automatic expiration previews wait for a location; manual expiration inputs remain usable before choosing one. Voice/text drafts can still fill a unique recommended or explicit location for review. From location details, adding retains that location; from a filtered Inventory view, it retains the location filter. Unfiltered Inventory adding starts unassigned. Existing item edits keep their own location, quantities and expiration provenance.
+
+97 automated tests, strict TypeScript and production build pass. New tests render the actual home controls and item forms, covering independent search/add button types, unavailable add states, an unassigned required location selector, contextual defaults, unchanged historical expiration during edits, and sentence entry with/without a unique location recommendation. These are server-rendered component and domain checks, not browser interaction tests. Browser tooling now initializes, but Work settings disable browser use; clicks, keyboard focus and narrow-screen visuals remain unverified in this stage. No personal browser inventory was modified. Cross-device sync remains unimplemented.

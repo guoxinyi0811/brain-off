@@ -50,6 +50,10 @@ h1 { font-size: 35px; font-weight: 600; letter-spacing: -1.8px; line-height: 1.2
 .storage-notice p { flex: 1; min-width: min(180px, 100%); }
 .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(265px, 1fr); gap: 58px; align-items: start; padding-block: 16px 35px; }
 .spatial-panel { min-width: 0; }
+.home-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: stretch; gap: 8px; margin: 8px 0 4px; }
+.home-actions label { min-width: 0; }
+.home-actions input { width: 100%; height: 100%; min-width: 0; padding: 10px; border: 1px solid #a4b2bd; border-radius: 2px; background: #fff; color: var(--ink); }
+.home-actions button { white-space: nowrap; }
 .fridge-visual { width: 100%; max-width: 540px; margin: auto; }
 .drawing-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; color: var(--muted); font-size: 10px; letter-spacing: 1px; padding: 0 5% 4px 8%; }
 .drawing-labels span:last-child { padding-left: 12%; }

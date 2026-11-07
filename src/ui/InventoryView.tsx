@@ -21,7 +21,7 @@ export function InventoryView({ state, today, query, busy, onQuery, onLocate, on
   const filtered = query.search.trim() !== '' || query.locationId !== '' || query.expiration !== 'all' || query.sort !== 'expiration';
   return <section className="inventory-view" id="inventory" aria-label="全部库存">
     <div className="inventory-tools">
-      <label className="search-field"><span className="sr-only">搜索食物</span><input type="search" value={query.search}
+      <label className="search-field"><span className="sr-only">搜索食物</span><input id="inventory-search" type="search" value={query.search}
         onChange={event => onQuery({ ...query, search: event.target.value })} placeholder="搜索食物" /></label>
       <button className="primary inventory-add" disabled={busy} onClick={onAdd}><span aria-hidden="true">＋</span> 添加食物</button>
       <div className="inventory-filters">
